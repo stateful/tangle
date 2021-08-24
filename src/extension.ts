@@ -45,8 +45,8 @@ export function activate(context: vscode.ExtensionContext) {
   ];
 
   // Subscribe to posts
-  const vrx = new Vrx("vscoderx");
-  vrx.subscribe(panelProviders);
+  const vrx = new Vrx<object>("vscoderx", new Object());
+  vrx.register(panelProviders);
 
   // Publish posts
   const countdown = 6;
@@ -120,16 +120,23 @@ interface VrxProvider {
   webview: Observable<vscode.Webview>;
 }
 
-export class Vrx {
-  private readonly _queue = new Subject<object>();
-  private readonly _inbound = new BehaviorSubject<object>({});
-  constructor(public readonly namespace: string, public readonly debounce = 100) {}
+export class Vrx<T> {
+  private readonly _queue: Subject<T>;
+  private readonly _inbound: BehaviorSubject<T>;
+  constructor(public readonly namespace: string, public readonly defaultValue: T) {
+    this._queue = new Subject<T>();
+    this._inbound = new BehaviorSubject<T>(this.defaultValue);
+  }
 
-  public publish(message: object) {
+  public publish(message: T) {
     this._queue.next(message);
   }
 
-  public subscribe(providers: VrxProvider[]): Subscription {
+  private combine(acc: T, one: T) {
+    return { ...acc, ...one };
+  }
+
+  public register(providers: VrxProvider[]): Subscription {
     const webviews = providers.map((panel) => panel.webview);
     const merged$ = merge(...webviews);
 
@@ -143,9 +150,7 @@ export class Vrx {
         }),
         mergeMap((webview) => {
           return merge(this._inbound, this._queue).pipe(
-            scan((acc, one) => {
-              return { ...acc, ...one };
-            }, {}),
+            scan(this.combine, this.defaultValue),
             mergeMap((message) => {
               return from(webview.postMessage(message).then(() => message));
             })
@@ -153,7 +158,7 @@ export class Vrx {
         }),
         bufferCount(webviews.length),
         map((messages) => {
-          return messages.reduce((acc, one) => ({ ...acc, ...one }), {});
+          return messages.reduce(this.combine, this.defaultValue);
         })
       )
       .subscribe(console.log);
