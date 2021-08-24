@@ -5,7 +5,7 @@ import path = require("path");
 import * as vscode from "vscode";
 import {
   BehaviorSubject,
-  distinctUntilChanged,
+  bufferCount,
   from,
   map,
   merge,
@@ -15,6 +15,8 @@ import {
   scan,
   Subject,
   Subscription,
+  take,
+  timer,
 } from "rxjs";
 
 const webviewOptions = {
@@ -42,26 +44,20 @@ export function activate(context: vscode.ExtensionContext) {
     { webview: of(panel.webview) },
   ];
 
-  // Publish posts
-  // const countdown = 6;
-  // const counter$ = timer(10000, 10000).pipe(take(countdown));
-  // from(panelProviders.map((panel) => panel.webview))
-  //   .pipe(
-  //     mergeAll(),
-  //     mergeMap((webview) => {
-  //       return counter$.pipe(
-  //         mergeMap((i) => {
-  //           const msg = { onPost: countdown - 1 - i };
-  //           return from(webview.postMessage(msg)).pipe(mapTo(msg));
-  //         })
-  //       );
-  //     })
-  //   )
-  //   .subscribe();
-
   // Subscribe to posts
   const vrx = new Vrx("vscoderx");
   vrx.subscribe(panelProviders);
+
+  // Publish posts
+  const countdown = 6;
+  timer(1000, 10000)
+    .pipe(
+      take(countdown),
+      map((i) => ({ onPost: countdown - 1 - i }))
+    )
+    .subscribe((msg) => {
+      vrx.publish(msg);
+    });
 
   context.subscriptions.push(
     vscode.commands.registerCommand("vscoderx.emit", () => {
@@ -127,7 +123,7 @@ interface VrxProvider {
 export class Vrx {
   private readonly _queue = new Subject<object>();
   private readonly _inbound = new BehaviorSubject<object>({});
-  constructor(public readonly namespace: string) {}
+  constructor(public readonly namespace: string, public readonly debounce = 100) {}
 
   public publish(message: object) {
     this._queue.next(message);
@@ -150,11 +146,14 @@ export class Vrx {
             scan((acc, one) => {
               return { ...acc, ...one };
             }, {}),
-            map((message) => {
-              from(webview.postMessage(message)).subscribe();
-              return message;
+            mergeMap((message) => {
+              return from(webview.postMessage(message).then(() => message));
             })
           );
+        }),
+        bufferCount(webviews.length),
+        map((messages) => {
+          return messages.reduce((acc, one) => ({ ...acc, ...one }), {});
         })
       )
       .subscribe(console.log);
