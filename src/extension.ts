@@ -13,6 +13,7 @@ import {
   Observable,
   of,
   scan,
+  share,
   Subject,
   Subscription,
   take,
@@ -123,44 +124,72 @@ interface VrxProvider {
 export class Vrx<T> {
   private readonly _queue: Subject<T>;
   private readonly _inbound: BehaviorSubject<T>;
+  private readonly _events: Subject<T>;
+  private _message?: Observable<T>;
   constructor(public readonly namespace: string, public readonly defaultValue: T) {
     this._queue = new Subject<T>();
     this._inbound = new BehaviorSubject<T>(this.defaultValue);
+    this._events = new Subject<T>();
+    this._events.subscribe(console.log);
   }
 
   public publish(message: T) {
     this._queue.next(message);
   }
 
-  private combine(acc: T, one: T) {
+  private fold(acc: T, one: T) {
     return { ...acc, ...one };
+  }
+
+  private fromEntries(accum: T, [k, v]: [string, any]) {
+    const r: any = { ...accum };
+    r[k] = v;
+    return r as T;
+  }
+
+  private filterEvents(raw: T, filter = true) {
+    const entries = Object.entries(raw);
+    return entries
+      .filter(([k, v]) => {
+        // if (k.indexOf("on") === 0) {
+        //   const raw: [[string, any]] = [[k, v]];
+        //   // const event = raw.reduce(this.fromEntries, this.defaultValue);
+        //   // this._events.next(event);
+        //   return false;
+        // }
+        // return true;
+        const isPrefixed = k.indexOf("on") === 0;
+        return filter ? isPrefixed : !isPrefixed;
+      })
+      .reduce(this.fromEntries, this.defaultValue);
   }
 
   public register(providers: VrxProvider[]): Subscription {
     const webviews = providers.map((panel) => panel.webview);
     const merged$ = merge(...webviews);
 
-    return merged$
-      .pipe(
-        map((webview) => {
-          webview.onDidReceiveMessage((message) => {
-            this._inbound.next(message);
-          });
-          return webview;
-        }),
-        mergeMap((webview) => {
-          return merge(this._inbound, this._queue).pipe(
-            scan(this.combine, this.defaultValue),
-            mergeMap((message) => {
-              return from(webview.postMessage(message).then(() => message));
-            })
-          );
-        }),
-        bufferCount(webviews.length),
-        map((messages) => {
-          return messages.reduce(this.combine, this.defaultValue);
-        })
-      )
-      .subscribe(console.log);
+    this._message = merged$.pipe(
+      map((webview) => {
+        webview.onDidReceiveMessage((message) => {
+          this._inbound.next(message);
+        });
+        return webview;
+      }),
+      mergeMap((webview) => {
+        return merge(this._inbound, this._queue).pipe(
+          scan(this.fold, this.defaultValue),
+          mergeMap((raw) => {
+            const payload = this.filterEvents(raw, false);
+            return from(webview.postMessage(payload).then(() => raw));
+          })
+        );
+      }),
+      bufferCount(webviews.length),
+      map((messages) => {
+        return messages.reduce(this.fold, this.defaultValue);
+      }),
+      share()
+    );
+    return this._message.subscribe(console.log);
   }
 }
