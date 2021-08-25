@@ -151,13 +151,6 @@ export class Vrx<T> {
     const entries = Object.entries(raw);
     return entries
       .filter(([k, v]) => {
-        // if (k.indexOf("on") === 0) {
-        //   const raw: [[string, any]] = [[k, v]];
-        //   // const event = raw.reduce(this.fromEntries, this.defaultValue);
-        //   // this._events.next(event);
-        //   return false;
-        // }
-        // return true;
         const isPrefixed = k.indexOf("on") === 0;
         return filter ? isPrefixed : !isPrefixed;
       })
