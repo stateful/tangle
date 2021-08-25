@@ -46,8 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
   ];
 
   // Subscribe to posts
-  const vrx = new Vrx<object>("vscoderx", new Object());
-  vrx.register(panelProviders);
+  const vrx = new Vrx<object>("vscoderx", panelProviders, {});
 
   // Publish posts
   const countdown = 6;
@@ -57,12 +56,12 @@ export function activate(context: vscode.ExtensionContext) {
       map((i) => ({ onPost: countdown - 1 - i }))
     )
     .subscribe((msg) => {
-      vrx.publish(msg);
+      vrx.broadcast(msg);
     });
 
   context.subscriptions.push(
     vscode.commands.registerCommand("vscoderx.emit", () => {
-      vrx.publish({ onCommand: "vscoderx.emit" });
+      vrx.broadcast({ onCommand: "vscoderx.emit" });
     })
   );
 }
@@ -126,14 +125,22 @@ export class Vrx<T> {
   private readonly _inbound: BehaviorSubject<T>;
   private readonly _events: Subject<T>;
   private _message?: Observable<T>;
-  constructor(public readonly namespace: string, public readonly defaultValue: T) {
+  private readonly _subscription: Subscription;
+
+  constructor(
+    public readonly namespace: string,
+    providers: VrxProvider[],
+    public readonly defaultValue: T
+  ) {
     this._queue = new Subject<T>();
     this._inbound = new BehaviorSubject<T>(this.defaultValue);
     this._events = new Subject<T>();
     this._events.subscribe(console.log);
+
+    this._subscription = this.register(providers);
   }
 
-  public publish(message: T) {
+  public broadcast(message: T) {
     this._queue.next(message);
   }
 
@@ -157,7 +164,7 @@ export class Vrx<T> {
       .reduce(this.fromEntries, this.defaultValue);
   }
 
-  public register(providers: VrxProvider[]): Subscription {
+  private register(providers: VrxProvider[]): Subscription {
     const webviews = providers.map((panel) => panel.webview);
     const merged$ = merge(...webviews);
 
@@ -183,6 +190,7 @@ export class Vrx<T> {
       }),
       share()
     );
+
     return this._message.subscribe(console.log);
   }
 }
