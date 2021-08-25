@@ -5,8 +5,9 @@ declare const acquireVsCodeApi: Function;
 window.addEventListener("load", () => {
   const vscode = acquireVsCodeApi();
   fromEvent(window, "message").subscribe((post: any) => {
+    const data = post.data["vscoderx"];
     const div = document.createElement("div");
-    div.appendChild(document.createTextNode(JSON.stringify(post.data)));
+    div.appendChild(document.createTextNode(JSON.stringify(data)));
     const root = document.getElementById("root");
     if (root?.firstChild) {
       root?.insertBefore(div, root.firstChild);
@@ -24,7 +25,7 @@ window.addEventListener("load", () => {
       msg[label] = true;
     }
     trigger.onclick = () => {
-      vscode.postMessage(msg);
+      vscode.postMessage({ vscoderx: msg });
     };
   }
 });

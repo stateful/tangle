@@ -124,7 +124,7 @@ export class Vrx<T> {
   private readonly _queue: Subject<T>;
   private readonly _inbound: BehaviorSubject<T>;
   private readonly _events: Subject<T>;
-  private _message?: Observable<T>;
+  private _raw?: Observable<T>;
   private readonly _subscription: Subscription;
 
   constructor(
@@ -168,10 +168,13 @@ export class Vrx<T> {
     const webviews = providers.map((panel) => panel.webview);
     const merged$ = merge(...webviews);
 
-    this._message = merged$.pipe(
+    this._raw = merged$.pipe(
       map((webview) => {
         webview.onDidReceiveMessage((message) => {
-          this._inbound.next(message);
+          const namespaced = message[this.namespace];
+          if (namespaced) {
+            this._inbound.next(namespaced as T);
+          }
         });
         return webview;
       }),
@@ -180,17 +183,19 @@ export class Vrx<T> {
           scan(this.fold, this.defaultValue),
           mergeMap((raw) => {
             const payload = this.filterEvents(raw, false);
-            return from(webview.postMessage(payload).then(() => raw));
+            const namespaced: any = {};
+            namespaced[this.namespace] = payload;
+            return from(webview.postMessage(namespaced).then(() => raw));
           })
         );
       }),
       bufferCount(webviews.length),
-      map((messages) => {
-        return messages.reduce(this.fold, this.defaultValue);
+      map((raw) => {
+        return raw.reduce(this.fold, this.defaultValue);
       }),
       share()
     );
 
-    return this._message.subscribe(console.log);
+    return this._raw.subscribe(console.log);
   }
 }
