@@ -23,14 +23,14 @@
 		"views": {
 			"explorer": [
 				{
-					"id": "vscoderx-explorer-panel0",
-					"name": "VS Code RX 0",
+					"id": "panel-one",
+					"name": "VRX 1",
 					"type": "webview",
 					"visibility": "visible"
 				},
 				{
-					"id": "vscoderx-explorer-panel1",
-					"name": "VS Code RX 1",
+					"id": "panel-two",
+					"name": "VRX 2",
 					"type": "webview",
 					"visibility": "visible"
 				}

@@ -6,18 +6,20 @@ import * as vscode from "vscode";
 import {
   BehaviorSubject,
   bufferCount,
+  filter,
   from,
   map,
   merge,
   mergeMap,
   Observable,
   of,
+  pluck,
   scan,
   share,
   Subject,
-  Subscription,
   take,
   timer,
+  withLatestFrom,
 } from "rxjs";
 
 const webviewOptions = {
@@ -29,31 +31,35 @@ const webviewOptions = {
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
   const panel = vscode.window.createWebviewPanel(
-    "vscoderx-column-one",
-    "VS Code RX Main",
+    "column-one",
+    "VRX column-one",
     vscode.ViewColumn.One,
     webviewOptions
   );
   const baseAppUri = panel.webview.asWebviewUri(
     vscode.Uri.file(path.join(context.extensionPath, "/dist/webview/"))
   );
-  panel.webview.html = getHtml(context, baseAppUri.toString(), "Main");
+  panel.webview.html = getHtml(context, baseAppUri.toString(), "column-one");
 
   const panelProviders: VrxProvider[] = [
-    PanelViewProvider.register(context, "vscoderx-explorer-panel0", "0"),
-    PanelViewProvider.register(context, "vscoderx-explorer-panel1", "1"),
-    { webview: of(panel.webview) },
+    PanelViewProvider.register(context, "panel-one"),
+    PanelViewProvider.register(context, "panel-two"),
+    { webview: of(panel.webview), identifier: panel.viewType },
   ];
 
   // Subscribe to posts
   const vrx = new Vrx<object>("vscoderx", panelProviders, {});
+
+  // Subscribe to events
+  vrx.on("panel", (msg) => console.log(`Listen to onPanel: ${msg}`));
+  // vrx.onAll((msg) => console.log(`Listen to all: ${JSON.stringify(msg)}`));
 
   // Publish posts
   const countdown = 6;
   timer(1000, 10000)
     .pipe(
       take(countdown),
-      map((i) => ({ onPost: countdown - 1 - i }))
+      map((i) => ({ onCountdown: countdown - 1 - i }))
     )
     .subscribe((msg) => {
       vrx.broadcast(msg);
@@ -78,7 +84,7 @@ export class PanelViewProvider implements vscode.WebviewViewProvider, VrxProvide
 
   constructor(
     private readonly _context: vscode.ExtensionContext,
-    private readonly _identifier: string
+    public readonly identifier: string
   ) {}
 
   resolveWebviewView(
@@ -94,19 +100,17 @@ export class PanelViewProvider implements vscode.WebviewViewProvider, VrxProvide
       localResourceRoots: [this._context.extensionUri],
     };
     const baseAppUri = webviewView.webview.asWebviewUri(vscode.Uri.file(basePath));
-    webviewView.webview.html = getHtml(this._context, baseAppUri.toString(), this._identifier);
+    webviewView.webview.html = getHtml(this._context, baseAppUri.toString(), this.identifier);
     this._webview.next(webviewView.webview);
   }
 
-  public static register(context: vscode.ExtensionContext, viewId: string, identifier: string) {
+  public static register(context: vscode.ExtensionContext, identifier: string) {
     const panelProvider = new PanelViewProvider(context, identifier);
-    context.subscriptions.push(vscode.window.registerWebviewViewProvider(viewId, panelProvider));
+    context.subscriptions.push(
+      vscode.window.registerWebviewViewProvider(identifier, panelProvider)
+    );
     return panelProvider;
   }
-
-  // public postMessage(msg: any) {
-  //   this.webview?.postMessage(msg);
-  // }
 
   public get webview() {
     return this._webview.asObservable();
@@ -118,30 +122,51 @@ export function deactivate() {}
 
 interface VrxProvider {
   webview: Observable<vscode.Webview>;
+  identifier: string;
 }
 
 export class Vrx<T> {
-  private readonly _queue: Subject<T>;
+  private readonly _outbound: Subject<T>;
   private readonly _inbound: BehaviorSubject<T>;
   private readonly _events: Subject<T>;
-  private _raw?: Observable<T>;
-  private readonly _subscription: Subscription;
+  private readonly _transient: Observable<T>;
 
   constructor(
     public readonly namespace: string,
     providers: VrxProvider[],
     public readonly defaultValue: T
   ) {
-    this._queue = new Subject<T>();
+    this._outbound = new Subject<T>();
     this._inbound = new BehaviorSubject<T>(this.defaultValue);
     this._events = new Subject<T>();
-    this._events.subscribe(console.log);
 
-    this._subscription = this.register(providers);
+    this._transient = this.register(providers);
   }
 
-  public broadcast(message: T) {
-    this._queue.next(message);
+  public get events() {
+    return this._events.asObservable().pipe(share());
+  }
+
+  public get transient() {
+    return this._transient;
+  }
+
+  public broadcast(transient: T) {
+    this._outbound.next(transient);
+  }
+
+  public on(eventName: string, fn: (...args: any[]) => void) {
+    this.events
+      .pipe(
+        mergeMap((events) => from(Object.entries(events))),
+        filter(([k]) => k.toLowerCase().indexOf(eventName.toLowerCase()) >= 0),
+        map(([_, v]) => v)
+      )
+      .subscribe(fn);
+  }
+
+  public onAll(fn: (...args: any[]) => void) {
+    this.events.subscribe(fn);
   }
 
   private fold(acc: T, one: T) {
@@ -164,38 +189,96 @@ export class Vrx<T> {
       .reduce(this.fromEntries, this.defaultValue);
   }
 
-  private register(providers: VrxProvider[]): Subscription {
-    const webviews = providers.map((panel) => panel.webview);
-    const merged$ = merge(...webviews);
+  private grouped() {
+    return (source: Observable<T>) => {
+      return source.pipe(
+        map((payload) => {
+          const entries = Object.entries(payload);
+          const grouped: { transient?: T; event?: T }[] = entries.map((entry) => {
+            const isPrefixed = entry[0].indexOf("on") === 0;
+            const obj = this.fromEntries(this.defaultValue, entry);
+            if (isPrefixed) {
+              return { event: obj };
+            }
+            return { transient: obj };
+          });
+          return grouped;
+        }),
+        map((grouped) => {
+          return {
+            transient: grouped.reduce((accum, one) => {
+              return { ...accum, ...one.transient };
+            }, this.defaultValue),
+            event: grouped.reduce((accum, one) => {
+              return { ...accum, ...one.event };
+            }, this.defaultValue),
+          };
+        })
+      );
+    };
+  }
 
-    this._raw = merged$.pipe(
+  private register(providers: VrxProvider[]): Observable<T> {
+    const webviews = providers.map((panel) => panel.webview);
+    const inGrouped$ = this._inbound.pipe(this.grouped());
+    const outGrouped$ = this._outbound.pipe(this.grouped());
+
+    const transientGrouped$ = merge(
+      inGrouped$.pipe(pluck("transient")),
+      outGrouped$.pipe(pluck("transient"))
+    );
+
+    const inEvent$ = inGrouped$.pipe(pluck("event"));
+    inEvent$.subscribe((event) => {
+      this._events.next(event);
+    });
+
+    const transient$ = merge(...webviews).pipe(
       map((webview) => {
-        webview.onDidReceiveMessage((message) => {
-          const namespaced = message[this.namespace];
-          if (namespaced) {
-            this._inbound.next(namespaced as T);
+        webview.onDidReceiveMessage((payload: any) => {
+          const unpacked = payload[this.namespace];
+          if (unpacked) {
+            this._inbound.next(unpacked as T);
           }
         });
         return webview;
       }),
       mergeMap((webview) => {
-        return merge(this._inbound, this._queue).pipe(
+        return transientGrouped$.pipe(
           scan(this.fold, this.defaultValue),
-          mergeMap((raw) => {
-            const payload = this.filterEvents(raw, false);
+          mergeMap((transient) => {
             const namespaced: any = {};
-            namespaced[this.namespace] = payload;
-            return from(webview.postMessage(namespaced).then(() => raw));
+            namespaced[this.namespace] = transient;
+            return from(webview.postMessage(namespaced).then(() => transient));
           })
         );
       }),
       bufferCount(webviews.length),
-      map((raw) => {
-        return raw.reduce(this.fold, this.defaultValue);
+      map((transient) => {
+        return transient.reduce(this.fold, this.defaultValue);
       }),
       share()
     );
 
-    return this._raw.subscribe(console.log);
+    const outEvent$ = outGrouped$.pipe(pluck("event"));
+
+    merge(...webviews)
+      .pipe(
+        mergeMap((webview) => {
+          return outEvent$.pipe(
+            withLatestFrom(transient$),
+            mergeMap(([event, transient]) => {
+              const namespaced: any = {};
+              namespaced[this.namespace] = { ...transient, ...event };
+              return from(webview.postMessage(namespaced).then(() => event));
+            })
+          );
+        })
+      )
+      .subscribe();
+
+    transient$.subscribe();
+
+    return transient$;
   }
 }
