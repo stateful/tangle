@@ -16,7 +16,7 @@ Use `CMD+SHIFT+B` keyboard shortcut to run default build task or run `$ yarn run
 
 ## Roadmap
 
-- [x] Extension host VRX API implementation draft
+- [x] Extension-side VRX API draft implementation
 - [x] Support transient state
 - [x] Support events
 - [ ] Support persistent state
