@@ -22,6 +22,7 @@ Use `CMD+SHIFT+B` keyboard shortcut to run default build task or run `$ yarn run
 - [ ] Support persistent state
 - [ ] Webview-side VRX API
 - [ ] Share classes (library) between extension & webview bundles
+- [ ] Add entirely absent error handling
 
 ## Launch extension
 
