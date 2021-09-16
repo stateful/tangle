@@ -12,6 +12,7 @@
   "devDependencies": {
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.9.5",
+    "copy-webpack-plugin": "^9.0.1",
     "@types/glob": "^7.1.1",
     "@types/mocha": "^7.0.2",
     "@types/node": "^13.11.0",
@@ -21,7 +22,6 @@
     "babel-loader": "^8.1.0",
     "babel-preset-react": "^6.24.1",
     "babel-preset-react-app": "^9.1.2",
-    "copy-webpack-plugin": "^5.1.1",
     "eslint": "^6.8.0",
     "eslint-loader": "^4.0.2",
     "glob": "^7.1.6",
