@@ -20,6 +20,7 @@ Use `CMD+SHIFT+B` keyboard shortcut to run default build task or run `$ yarn run
 - [x] Support transient state
 - [x] Support events
 - [ ] Support persistent state
+- [ ] Consolidate dependencies into single yarn.lock
 - [ ] Webview-side VRX API
 - [ ] Share classes (library) between extension & webview bundles
 - [ ] Add entirely absent error handling
