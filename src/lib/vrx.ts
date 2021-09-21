@@ -74,16 +74,6 @@ export class Vrx<T> {
     return r as T;
   }
 
-  private filterEvents(raw: T, filter = true) {
-    const entries = Object.entries(raw);
-    return entries
-      .filter(([k, v]) => {
-        const isPrefixed = k.indexOf("on") === 0;
-        return filter ? isPrefixed : !isPrefixed;
-      })
-      .reduce(this.fromEntries, this.defaultValue);
-  }
-
   private grouped() {
     return (source: Observable<T>) => {
       return source.pipe(
