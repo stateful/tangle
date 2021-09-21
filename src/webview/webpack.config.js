@@ -58,6 +58,6 @@ const config = {
   performance: {
     hints: false,
   },
-  plugins: [new CopyPlugin({ patterns: [{ from: "*.html", to: '[name][ext]' }]})],
+  plugins: [new CopyPlugin({ patterns: [{ from: "*.html", to: "[name][ext]" }] })],
 };
 module.exports = config;
