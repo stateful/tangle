@@ -2,6 +2,7 @@
   "name": "vscoderx",
   "displayName": "vscoderx",
   "description": "Minimal state-management implementation to connect insular views in VS Code",
+  "publisher": "activecove",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.57.0"
