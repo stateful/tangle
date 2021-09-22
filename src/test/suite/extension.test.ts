@@ -11,5 +11,8 @@ describe("Extension", () => {
   it("loads", () => {
     const vscoderx = vscode.extensions.getExtension("activecove.vscoderx");
     assert.ok(vscoderx);
+    vscoderx?.activate().then(() => {
+      assert.ok(vscoderx);
+    });
   });
 });
