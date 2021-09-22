@@ -8,11 +8,10 @@ import * as ext from "../../extension";
 describe("Extension", () => {
   vscode.window.showInformationMessage("Start all tests.");
 
-  it("loads", () => {
+  it("loads", async () => {
     const vscoderx = vscode.extensions.getExtension("activecove.vscoderx");
     assert.ok(vscoderx);
-    vscoderx?.activate().then(() => {
-      assert.ok(vscoderx);
-    });
+    const isActive = await vscoderx?.activate().then(() => vscoderx.isActive);
+    assert.ok(isActive);
   });
 });
