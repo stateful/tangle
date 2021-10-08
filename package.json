@@ -1,76 +1,78 @@
 {
-	"name": "vscoderx",
-	"displayName": "vscoderx",
-	"description": "Minimal state-management implementation to connect insular views in VS Code",
-	"version": "0.0.1",
-	"engines": {
-		"vscode": "^1.57.0"
-	},
-	"categories": [
-		"Other"
-	],
-	"activationEvents": [
-		"*"
-	],
-	"main": "./dist/extension.js",
-	"contributes": {
-		"commands": [
-			{
-				"command": "vscoderx.emit",
-				"title": "VS Code RX Emit"
-			}
-		],
-		"views": {
-			"explorer": [
-				{
-					"id": "panel-one",
-					"name": "VRX 1",
-					"type": "webview",
-					"visibility": "visible"
-				},
-				{
-					"id": "panel-two",
-					"name": "VRX 2",
-					"type": "webview",
-					"visibility": "visible"
-				}
-			]
-		}
-	},
-	"scripts": {
-		"vscode:prepublish": "yarn run package",
-		"compile": "yarn run package",
-		"clean": "rm -rf dist",
-		"watch": "npm-run-all -p watch:*",
-		"watch:extension": "webpack --watch --mode development",
-		"watch:webview": "cd src/webview && webpack --watch --mode development",
-		"package": "yarn run clean && npm-run-all -p package:*",
-		"package:extension": "webpack --mode production --devtool hidden-source-map",
-		"package:webview": "cd src/webview && webpack --mode production --devtool hidden-source-map",
-		"test-compile": "tsc -p ./",
-		"test-watch": "tsc -watch -p ./",
-		"pretest": "yarn run test-compile && yarn run lint",
-		"lint": "eslint src --ext ts",
-		"test": "node ./out/test/runTest.js"
-	},
-	"devDependencies": {
-		"@types/glob": "^7.1.3",
-		"@types/mocha": "^8.2.2",
-		"@types/node": "14.x",
-		"@types/vscode": "^1.57.0",
-		"@typescript-eslint/eslint-plugin": "^4.26.0",
-		"@typescript-eslint/parser": "^4.26.0",
-		"eslint": "^7.27.0",
-		"glob": "^7.1.7",
-		"mocha": "^8.4.0",
-		"ts-loader": "^9.2.5",
-		"typescript": "^4.3.2",
-		"vscode-test": "^1.5.2",
-		"webpack": "^5.38.1",
-		"webpack-cli": "^4.7.0"
-	},
-	"dependencies": {
-		"npm-run-all": "^4.1.5",
-		"rxjs": "^7.3.0"
-	}
+  "name": "vscoderx",
+  "displayName": "vscoderx",
+  "description": "Minimal state-management implementation to connect insular views in VS Code",
+  "publisher": "activecove",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.57.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscoderx.emit",
+        "title": "VS Code RX Emit"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "panel-one",
+          "name": "VRX 1",
+          "type": "webview",
+          "visibility": "visible"
+        },
+        {
+          "id": "panel-two",
+          "name": "VRX 2",
+          "type": "webview",
+          "visibility": "visible"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "yarn run package",
+    "compile": "yarn run package",
+    "clean": "rm -rf dist",
+    "watch": "npm-run-all -p watch:*",
+    "watch:extension": "webpack --watch --mode development",
+    "watch:webview": "cd src/webview && webpack --watch --mode development",
+    "package": "yarn run clean && npm-run-all -p package:*",
+    "package:extension": "webpack --mode production --devtool hidden-source-map",
+    "package:webview": "cd src/webview && webpack --mode production --devtool hidden-source-map",
+    "test-compile": "tsc -p ./",
+    "test-watch": "tsc -watch -p ./",
+    "pretest": "yarn run test-compile && yarn run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./dist/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.3",
+    "@types/mocha": "^8.2.2",
+    "@types/node": "14.x",
+    "@types/vscode": "^1.57.0",
+    "@typescript-eslint/eslint-plugin": "^4.26.0",
+    "@typescript-eslint/parser": "^4.26.0",
+    "copy-webpack-plugin": "^9.0.1",
+    "eslint": "^7.27.0",
+    "glob": "^7.1.7",
+    "mocha": "^8.4.0",
+    "ts-loader": "^9.2.5",
+    "typescript": "^4.3.2",
+    "vscode-test": "^1.5.2",
+    "webpack": "^5.38.1",
+    "webpack-cli": "^4.7.0"
+  },
+  "dependencies": {
+    "npm-run-all": "^4.1.5",
+    "rxjs": "^7.3.0"
+  }
 }
