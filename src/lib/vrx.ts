@@ -103,6 +103,22 @@ export class Vrx<T> {
     };
   }
 
+  private fromWebviews() {
+    return (source: Observable<vscode.Webview>) => {
+      return source.pipe(
+        map((webview) => {
+          webview.onDidReceiveMessage((payload: any) => {
+            const unpacked = payload[this.namespace];
+            if (unpacked) {
+              this._inbound.next(unpacked as T);
+            }
+          });
+          return webview;
+        })
+      );
+    };
+  }
+
   private register(providers: VrxProvider[]): Observable<T> {
     const webviews = providers.map((panel) => panel.webview);
     const inGrouped$ = this._inbound.pipe(this.grouped());
@@ -119,15 +135,7 @@ export class Vrx<T> {
     });
 
     const transient$ = merge(...webviews).pipe(
-      map((webview) => {
-        webview.onDidReceiveMessage((payload: any) => {
-          const unpacked = payload[this.namespace];
-          if (unpacked) {
-            this._inbound.next(unpacked as T);
-          }
-        });
-        return webview;
-      }),
+      this.fromWebviews(),
       mergeMap((webview) => {
         return transientGrouped$.pipe(
           scan(this.fold, this.defaultValue),
