@@ -4,7 +4,7 @@ import { readFileSync } from "fs";
 import path = require("path");
 import * as vscode from "vscode";
 import { map, of, Subject, take, timer } from "rxjs";
-import { VrxProvider, Vrx } from "./lib/vrx";
+import * as Vrx from "./lib/vrx";
 
 const webviewOptions = {
   enableScripts: true,
@@ -25,35 +25,36 @@ export function activate(context: vscode.ExtensionContext) {
   );
   panel.webview.html = getHtml(context, baseAppUri.toString(), "column-one");
 
-  const panelProviders: VrxProvider[] = [
+  const panelProviders: Vrx.WebviewProvider[] = [
     PanelViewProvider.register(context, "panel-one"),
     PanelViewProvider.register(context, "panel-two"),
     { webview: of(panel.webview), identifier: panel.viewType },
   ];
 
   // Subscribe to posts
-  const vrx = new Vrx<object>("vscoderx", panelProviders, {});
+  // const vrx = new Vrx.Bus<object>("vscoderx", {}, panelProviders);
+  Vrx.forWebviews("vscoderx", {}, panelProviders).subscribe((bus) => {
+    // Subscribe to events
+    bus.on("panel", (msg) => console.log(`Listen to onPanel: ${msg}`));
+    // vrx.onAll((msg) => console.log(`Listen to all: ${JSON.stringify(msg)}`));
 
-  // Subscribe to events
-  vrx.on("panel", (msg) => console.log(`Listen to onPanel: ${msg}`));
-  // vrx.onAll((msg) => console.log(`Listen to all: ${JSON.stringify(msg)}`));
+    // Publish posts
+    const countdown = 6;
+    timer(2000, 8000)
+      .pipe(
+        take(countdown),
+        map((i) => ({ onCountdown: countdown - 1 - i }))
+      )
+      .subscribe((msg) => {
+        bus.broadcast(msg);
+      });
 
-  // Publish posts
-  const countdown = 6;
-  timer(1000, 10000)
-    .pipe(
-      take(countdown),
-      map((i) => ({ onCountdown: countdown - 1 - i }))
-    )
-    .subscribe((msg) => {
-      vrx.broadcast(msg);
-    });
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand("vscoderx.emit", () => {
-      vrx.broadcast({ onCommand: "vscoderx.emit" });
-    })
-  );
+    context.subscriptions.push(
+      vscode.commands.registerCommand("vscoderx.emit", () => {
+        bus.broadcast({ onCommand: "vscoderx.emit" });
+      })
+    );
+  });
 }
 
 function getHtml(context: vscode.ExtensionContext, baseAppUri: string, identifier: string) {
@@ -62,7 +63,7 @@ function getHtml(context: vscode.ExtensionContext, baseAppUri: string, identifie
   return html.replace("app-ext-path", baseAppUri).replace(re, identifier);
 }
 
-export class PanelViewProvider implements vscode.WebviewViewProvider, VrxProvider {
+export class PanelViewProvider implements vscode.WebviewViewProvider, Vrx.WebviewProvider {
   public view?: vscode.WebviewView;
   private _webview = new Subject<vscode.Webview>();
 
