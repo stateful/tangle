@@ -180,7 +180,6 @@ export class Client<T> {
             const unpacked = payload[this.namespace];
             if (unpacked) {
               const payload = unpacked as T;
-              console.log(payload);
               this._inbound.next(payload);
             }
           });
