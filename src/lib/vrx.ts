@@ -30,7 +30,11 @@ export interface Provider {
   postMessage: (message: any) => Promise<void>;
 }
 
-export function forWebviews<T>(namespace: string, defaultValue: T, wvProviders: WebviewProvider[]) {
+export function forWebviews<T>(
+  namespace: string,
+  defaultValue: T,
+  wvProviders: WebviewProvider[]
+): Observable<Bus<T>> {
   return merge(...wvProviders.map((wv) => wv.webview)).pipe(
     take(wvProviders.length),
     toArray(),

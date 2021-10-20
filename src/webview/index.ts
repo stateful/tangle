@@ -40,8 +40,8 @@ function onload(event: Event) {
 
     const client = Vrx.forDOM("vscoderx", {}, window, vscode);
     // client.onAll(onMsg(label));
-    // client.on("panel", onMsg(label));
-    // client.on("countdown", onMsg(label));
+    client.on("panel", onMsg(label));
+    client.on("countdown", onMsg(label));
     // client.transient.subscribe(onMsg(label));
 
     trigger.onclick = () => {
