@@ -8,6 +8,7 @@ import {
   merge,
   mergeMap,
   Observable,
+  of,
   pairwise,
   pluck,
   scan,
@@ -15,7 +16,6 @@ import {
   startWith,
   Subject,
   take,
-  tap,
   toArray,
   withLatestFrom,
 } from "rxjs";
@@ -86,7 +86,8 @@ export class Client<T> {
   constructor(
     public readonly namespace: string,
     public readonly defaultValue: T,
-    public readonly providers: Provider[]
+    public readonly providers: Provider[],
+    private readonly _isBus: boolean = false
   ) {
     this._outbound = new Subject<T>();
     this._inbound = new BehaviorSubject<T>(this.defaultValue);
@@ -121,12 +122,9 @@ export class Client<T> {
     this.events.subscribe(fn);
   }
 
-  protected register() {
+  protected register(): Observable<T> {
     const providers = from(this.providers);
-    const inGrouped$ = this._inbound.pipe(
-      // tap((event) => console.log(`inbound: ${JSON.stringify(event)}`)),
-      this.grouped()
-    );
+    const inGrouped$ = this._inbound.pipe(this.grouped());
     const outGrouped$ = this._outbound.pipe(this.grouped());
 
     const transientGrouped$ = merge(
@@ -141,28 +139,43 @@ export class Client<T> {
 
     const transient$ = merge(providers).pipe(
       this.fromProviders(),
-      mergeMap((_provider) => {
-        return transientGrouped$.pipe(scan(this.fold, this.defaultValue));
+      mergeMap((provider) => {
+        return transientGrouped$.pipe(
+          scan(this.fold, this.defaultValue),
+          mergeMap((transient) => {
+            const namespaced: any = {};
+            namespaced[this.namespace] = transient;
+            if (this._isBus) {
+              return from(provider.postMessage(namespaced).then(() => transient));
+            } else {
+              return of(transient);
+            }
+          })
+        );
       }),
       bufferCount(this.providers.length),
-      map((transient) => {
-        return transient.reduce(this.fold, this.defaultValue);
+      map((transients) => {
+        return transients.reduce(this.fold, this.defaultValue);
       }),
       share()
     );
-    const outEvent$ = outGrouped$.pipe(pluck("event"));
 
-    merge(providers)
+    const outEvent$ = outGrouped$.pipe(pluck("event"));
+    const event$ = this._isBus ? merge(outEvent$, inEvent$) : outEvent$;
+
+    event$
       .pipe(
-        mergeMap((provider) => {
-          return outEvent$.pipe(
-            withLatestFrom(transient$),
-            mergeMap(([event, transient]) => {
-              const namespaced: any = {};
-              namespaced[this.namespace] = { ...transient, ...event };
-              return from(provider.postMessage(namespaced).then(() => event));
-            })
-          );
+        withLatestFrom(transient$),
+        map(([event, transient]) => {
+          return { ...transient, ...event };
+        }),
+        map((combo) => {
+          const namespaced: any = {};
+          namespaced[this.namespace] = combo;
+
+          this.providers.forEach((provider) => {
+            provider.postMessage(namespaced);
+          });
         })
       )
       .subscribe();
@@ -241,78 +254,7 @@ export class Client<T> {
 }
 
 export class Bus<T> extends Client<T> {
-  // private fromWebviews() {
-  //   return (source: Observable<vscode.Webview>) => {
-  //     return source.pipe(
-  //       map((webview) => {
-  //         webview.onDidReceiveMessage((payload: any) => {
-  //           const unpacked = payload[this.namespace];
-  //           if (unpacked) {
-  //             this._inbound.next(unpacked as T);
-  //           }
-  //         });
-  //         return webview;
-  //       })
-  //     );
-  //   };
-  // }
-  protected register(): Observable<T> {
-    // const webviews = this.providers.map((panel) => panel.webview);
-    const providers = from(this.providers);
-    const inGrouped$ = this._inbound.pipe(this.grouped());
-    const outGrouped$ = this._outbound.pipe(this.grouped());
-
-    const transientGrouped$ = merge(
-      inGrouped$.pipe(pluck("transient")),
-      outGrouped$.pipe(pluck("transient"))
-    );
-
-    const inEvent$ = inGrouped$.pipe(pluck("event"));
-    inEvent$.subscribe((event) => {
-      this._events.next(event);
-    });
-
-    const transient$ = merge(providers).pipe(
-      this.fromProviders(),
-      mergeMap((provider) => {
-        return transientGrouped$.pipe(
-          scan(this.fold, this.defaultValue),
-          mergeMap((transient) => {
-            const namespaced: any = {};
-            namespaced[this.namespace] = transient;
-            return from(provider.postMessage(namespaced).then(() => transient));
-          })
-        );
-      }),
-      bufferCount(this.providers.length),
-      map((transient) => {
-        return transient.reduce(this.fold, this.defaultValue);
-      }),
-      share()
-    );
-
-    const outEvent$ = outGrouped$.pipe(pluck("event"));
-
-    outEvent$
-      .pipe(
-        withLatestFrom(transient$),
-        map(([event, transient]) => {
-          return { ...transient, ...event };
-        }),
-        this.dedupe(),
-        map((combo) => {
-          const namespaced: any = {};
-          namespaced[this.namespace] = combo;
-
-          this.providers.forEach((provider) => {
-            provider.postMessage(namespaced);
-          });
-        })
-      )
-      .subscribe();
-
-    transient$.subscribe();
-
-    return transient$;
+  constructor(namespace: string, defaultValue: T, providers: Provider[]) {
+    super(namespace, defaultValue, providers, true);
   }
 }
