@@ -3,7 +3,7 @@
 import { readFileSync } from "fs";
 import path = require("path");
 import * as vscode from "vscode";
-import { of, Subject, timer } from "rxjs";
+import { Subject, timer } from "rxjs";
 import { map, take } from "rxjs/operators";
 import * as Vrx from "vscoderx";
 
@@ -29,7 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
   const panelProviders: Vrx.WebviewProvider[] = [
     PanelViewProvider.register(context, "panel-one"),
     PanelViewProvider.register(context, "panel-two"),
-    Vrx.fromPanel(panel),
+    Vrx.wrapPanel(panel),
   ];
 
   // Subscribe to posts
