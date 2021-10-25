@@ -1,24 +1,19 @@
 import * as vscode from "vscode";
+import { BehaviorSubject, from, merge, Observable, of, Subject } from "rxjs";
 import {
-  BehaviorSubject,
   bufferCount,
   filter,
-  from,
   map,
-  merge,
   mergeMap,
-  Observable,
-  of,
   pairwise,
   pluck,
   scan,
   share,
   startWith,
-  Subject,
   take,
   toArray,
   withLatestFrom,
-} from "rxjs";
+} from "rxjs/operators";
 
 export interface WebviewProvider {
   webview: Observable<vscode.Webview>;
@@ -28,6 +23,10 @@ export interface WebviewProvider {
 export interface Provider {
   onMessage: (listener: EventListener) => void;
   postMessage: (message: any) => Promise<void>;
+}
+
+export function wrapPanel(panel: vscode.WebviewPanel): WebviewProvider {
+  return { webview: of(panel.webview), identifier: panel.viewType };
 }
 
 export function forWebviews<T>(

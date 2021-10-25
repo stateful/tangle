@@ -26,21 +26,21 @@ const config = {
           },
         ],
       },
-      {
-        test: /\.jsx?$/,
-        exclude: /node_modules/,
-        use: [
-          "babel-loader",
-          {
-            loader: "eslint-loader",
-            options: {
-              fix: false,
-              emitWarning: false,
-              emitError: false,
-            },
-          },
-        ],
-      },
+      // {
+      //   test: /\.jsx?$/,
+      //   exclude: /node_modules/,
+      //   use: [
+      //     "babel-loader",
+      //     {
+      //       loader: "eslint-loader",
+      //       options: {
+      //         fix: false,
+      //         emitWarning: false,
+      //         emitError: false,
+      //       },
+      //     },
+      //   ],
+      // },
       {
         test: /\.css$/,
         use: ["style-loader", "css-loader"],

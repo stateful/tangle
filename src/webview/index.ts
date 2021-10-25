@@ -1,5 +1,6 @@
-import { fromEvent, map, merge, pluck } from "rxjs";
-import * as Vrx from "../lib/vrx";
+import { fromEvent, merge } from "rxjs";
+import { map, pluck } from "rxjs/operators";
+import * as Vrx from "vscoderx";
 
 declare const acquireVsCodeApi: Function;
 
