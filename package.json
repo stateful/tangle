@@ -13,12 +13,12 @@
   "activationEvents": [
     "*"
   ],
-  "types": "dist/lib/vrx.d.ts",
-  "main": "dist/lib/vrx.cjs.js",
-  "module": "dist/lib/vrx.esm.js",
+  "types": "dist/vrx.d.ts",
+  "main": "dist/vrx.cjs.js",
+  "module": "dist/vrx.esm.js",
   "exports": {
-    "require": "./dist/lib/vrx.cjs.js",
-    "import": "./dist/lib/vrx.esm.js"
+    "require": "./dist/vrx.cjs.js",
+    "import": "./dist/vrx.esm.js"
   },
   "contributes": {
     "commands": [

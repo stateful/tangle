@@ -7,8 +7,8 @@ const extensions = [".js", ".ts"];
 export default {
   input: "src/lib/vrx.ts",
   output: [
-    { file: "./dist/lib/vrx.cjs.js", format: "cjs" },
-    { file: "./dist/lib/vrx.esm.js", format: "es" },
+    { file: "./dist/vrx.cjs.js", format: "cjs" },
+    { file: "./dist/vrx.esm.js", format: "es" },
   ],
   plugins: [
     resolve({ extensions }),
