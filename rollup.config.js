@@ -16,7 +16,7 @@ export default {
       babelHelpers: "bundled",
       include: ["src/**/*.ts"],
       extensions,
-      exclude: "./node_modules/**",
+      exclude: ["./node_modules/**", "**/*.spec.ts"],
     }),
   ],
 };
