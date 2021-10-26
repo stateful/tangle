@@ -1,6 +1,11 @@
 import * as vscode from "vscode";
-import { BehaviorSubject, from, merge, Observable, of, Subject } from "rxjs";
 import {
+  BehaviorSubject,
+  from,
+  merge,
+  Observable,
+  of,
+  Subject,
   bufferCount,
   filter,
   map,
@@ -13,7 +18,7 @@ import {
   take,
   toArray,
   withLatestFrom,
-} from "rxjs/operators";
+} from "rxjs";
 
 export interface WebviewProvider {
   webview: Observable<vscode.Webview>;
