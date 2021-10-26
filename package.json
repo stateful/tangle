@@ -4,9 +4,6 @@
   "description": "Minimal state-management implementation to connect insular views in VS Code",
   "publisher": "activecove",
   "version": "0.0.1",
-  "engines": {
-    "vscode": "^1.57.0"
-  },
   "categories": [
     "Other"
   ],
@@ -19,30 +16,6 @@
   "exports": {
     "require": "./dist/vrx.cjs.js",
     "import": "./dist/vrx.esm.js"
-  },
-  "contributes": {
-    "commands": [
-      {
-        "command": "vscoderx.emit",
-        "title": "VS Code RX Emit"
-      }
-    ],
-    "views": {
-      "explorer": [
-        {
-          "id": "panel-one",
-          "name": "VRX 1",
-          "type": "webview",
-          "visibility": "visible"
-        },
-        {
-          "id": "panel-two",
-          "name": "VRX 2",
-          "type": "webview",
-          "visibility": "visible"
-        }
-      ]
-    }
   },
   "scripts": {
     "vscode:prepublish": "yarn run package",

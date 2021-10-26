@@ -5,7 +5,7 @@ import { terser } from "rollup-plugin-terser";
 const extensions = [".js", ".ts"];
 
 export default {
-  input: "src/lib/vrx.ts",
+  input: "src/vrx.ts",
   output: [
     { file: "./dist/vrx.cjs.js", format: "cjs" },
     { file: "./dist/vrx.esm.js", format: "es" },
@@ -14,7 +14,7 @@ export default {
     resolve({ extensions }),
     babel({
       babelHelpers: "bundled",
-      include: ["src/lib/**/*.ts"],
+      include: ["src/**/*.ts"],
       extensions,
       exclude: "./node_modules/**",
     }),
