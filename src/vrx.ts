@@ -18,6 +18,7 @@ import {
   take,
   toArray,
   withLatestFrom,
+  distinctUntilKeyChanged,
 } from "rxjs";
 
 export interface WebviewProvider {
@@ -116,6 +117,10 @@ export class Client<T> {
     this._outbound.next(transient);
   }
 
+  public listen(key: keyof T, fn: (...args: any[]) => void) {
+    this.events.pipe(pluck(key)).subscribe(fn);
+  }
+
   public on(eventName: string, fn: (...args: any[]) => void) {
     this.events
       .pipe(
@@ -128,6 +133,29 @@ export class Client<T> {
 
   public onAll(fn: (...args: any[]) => void) {
     this.events.subscribe(fn);
+  }
+
+  public subscribe(
+    key: keyof T,
+    fn: (...args: any[]) => void,
+    distinctUntilChanged: boolean = false
+  ) {
+    if (distinctUntilChanged) {
+      return this.transient
+        .pipe(
+          distinctUntilKeyChanged(key),
+          pluck(key),
+          filter((val) => val !== undefined)
+        )
+        .subscribe(fn);
+    } else {
+      return this.transient
+        .pipe(
+          pluck(key),
+          filter((val) => val !== undefined)
+        )
+        .subscribe(fn);
+    }
   }
 
   protected register(): Observable<T> {
