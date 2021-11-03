@@ -1710,7 +1710,7 @@ class Client {
   }
 
   listen(key, fn) {
-    this.events.pipe(pluck(key)).subscribe(fn);
+    this.events.pipe(pluck(key), filter(val => val !== undefined)).subscribe(fn);
   }
 
   on(eventName, fn) {
