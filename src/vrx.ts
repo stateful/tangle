@@ -118,7 +118,12 @@ export class Client<T> {
   }
 
   public listen(key: keyof T, fn: (...args: any[]) => void) {
-    this.events.pipe(pluck(key)).subscribe(fn);
+    this.events
+      .pipe(
+        pluck(key),
+        filter((val) => val !== undefined)
+      )
+      .subscribe(fn);
   }
 
   public on(eventName: string, fn: (...args: any[]) => void) {
