@@ -19,6 +19,7 @@ import {
   toArray,
   withLatestFrom,
   distinctUntilKeyChanged,
+  throttleTime,
 } from "rxjs";
 
 export interface WebviewProvider {
@@ -183,6 +184,7 @@ export class Client<T> {
       mergeMap((provider) => {
         return transientGrouped$.pipe(
           scan(this.fold, this.defaultValue),
+          throttleTime(20),
           mergeMap((transient) => {
             const namespaced: any = {};
             namespaced[this.namespace] = transient;
