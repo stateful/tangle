@@ -18,7 +18,6 @@
   "bugs": {
     "url": "https://github.com/stateful/vscoderx/issues"
   },
-  "type": "module",
   "types": "dist/vrx.d.ts",
   "main": "dist/vrx.cjs.js",
   "module": "dist/vrx.esm.js",
