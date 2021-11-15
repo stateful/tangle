@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "module": "esnext",
+    "moduleResolution": "node",
     "sourceMap": true,
     "declaration": true,
     "declarationDir": ".",

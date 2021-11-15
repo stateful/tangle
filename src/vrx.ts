@@ -1,4 +1,4 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 import {
   BehaviorSubject,
   from,
@@ -20,7 +20,7 @@ import {
   withLatestFrom,
   distinctUntilKeyChanged,
   throttleTime,
-} from "rxjs";
+} from 'rxjs';
 
 export interface WebviewProvider {
   webview: Observable<vscode.Webview>;
@@ -75,7 +75,7 @@ export function forDOM<T>(
 ) {
   const provider: Provider = {
     onMessage: (listener: EventListener) => {
-      window.addEventListener("message", (event) => listener(event.data));
+      window.addEventListener('message', (event) => listener(event.data));
     },
     postMessage: (message: any) => {
       vscode.postMessage(message);
@@ -170,11 +170,11 @@ export class Client<T> {
     const outGrouped$ = this._outbound.pipe(this.grouped());
 
     const transientGrouped$ = merge(
-      inGrouped$.pipe(pluck("transient")),
-      outGrouped$.pipe(pluck("transient"))
+      inGrouped$.pipe(pluck('transient')),
+      outGrouped$.pipe(pluck('transient'))
     );
 
-    const inEvent$ = inGrouped$.pipe(pluck("event"));
+    const inEvent$ = inGrouped$.pipe(pluck('event'));
     inEvent$.subscribe((event) => {
       this._events.next(event);
     });
@@ -203,7 +203,7 @@ export class Client<T> {
       share()
     );
 
-    const outEvent$ = outGrouped$.pipe(pluck("event"));
+    const outEvent$ = outGrouped$.pipe(pluck('event'));
     const event$ = this._isBus ? merge(outEvent$, inEvent$) : outEvent$;
 
     event$
@@ -272,7 +272,7 @@ export class Client<T> {
         map((payload) => {
           const entries = Object.entries(payload);
           const grouped: { transient?: T; event?: T }[] = entries.map((entry) => {
-            const isPrefixed = entry[0].indexOf("on") === 0;
+            const isPrefixed = entry[0].indexOf('on') === 0;
             const obj = this.fromEntries(this.defaultValue, entry);
             if (isPrefixed) {
               return { event: obj };
