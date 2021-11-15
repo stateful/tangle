@@ -1,0 +1,9 @@
+node_modules
+src
+tests
+.eslintrc.json
+.nvmrc
+.yarnrc
+/*.js
+/*.json
+/*.lock

@@ -1,5 +1,6 @@
-import babel from "@rollup/plugin-babel";
+import typescript from "@rollup/plugin-typescript";
 import resolve from "@rollup/plugin-node-resolve";
+import cleanup from 'rollup-plugin-cleanup';
 import { terser } from "rollup-plugin-terser";
 
 const extensions = [".js", ".ts"];
@@ -7,16 +8,16 @@ const extensions = [".js", ".ts"];
 export default {
   input: "src/vrx.ts",
   output: [
-    { file: "./dist/vrx.cjs.js", format: "cjs" },
-    { file: "./dist/vrx.esm.js", format: "es" },
+    { file: "./dist/vrx.cjs.js", format: "cjs", plugins: [terser()] },
+    { file: "./dist/vrx.esm.js", format: "es", plugins: [terser()] },
   ],
   plugins: [
     resolve({ extensions }),
-    babel({
-      babelHelpers: "bundled",
-      include: ["src/**/*.ts"],
-      extensions,
-      exclude: ["./node_modules/**", "**/*.spec.ts"],
+    typescript({
+      tsconfig: './tsconfig.json'
+    }),
+    cleanup({
+      comments: 'none',
     }),
   ],
 };
