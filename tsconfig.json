@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "esnext",
+    "module": "CommonJS",
     "moduleResolution": "node",
     "sourceMap": true,
     "declaration": true,
@@ -12,7 +12,12 @@
     "lib": ["es6", "dom"],
     "rootDir": "src",
     "strict": true,
-    "removeComments": true
+    "removeComments": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
-  "exclude": ["node_modules", "dist", "**/*.spec.ts"]
+  "ts-node": {
+    "files": true
+  },
+  "exclude": ["node_modules", "dist", "test"]
 }
