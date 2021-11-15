@@ -132,7 +132,7 @@ export class Client<T> {
       .pipe(
         mergeMap((events) => from(Object.entries(events))),
         filter(([k]) => k.toLowerCase().indexOf(eventName.toLowerCase()) >= 0),
-        map(([_, v]) => v)
+        map(([, v]) => v)
       )
       .subscribe(fn);
   }
@@ -144,7 +144,7 @@ export class Client<T> {
   public subscribe(
     key: keyof T,
     fn: (...args: any[]) => void,
-    distinctUntilChanged: boolean = false
+    distinctUntilChanged = false
   ) {
     if (distinctUntilChanged) {
       return this.transient
@@ -251,7 +251,7 @@ export class Client<T> {
         startWith(this.defaultValue),
         pairwise(),
         filter(([prev, curr]) => JSON.stringify(prev) !== JSON.stringify(curr)),
-        map(([_, curr]) => curr)
+        map(([, curr]) => curr)
       );
     };
   }

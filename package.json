@@ -1,9 +1,24 @@
 {
   "name": "vscoderx",
-  "displayName": "vscoderx",
-  "description": "Minimal state-management implementation to connect insular views in VS Code",
-  "publisher": "activecove",
   "version": "0.1.2",
+  "description": "Minimal state-management implementation to connect insular views in VS Code",
+  "author": "Sebastian Tiedtke <sebastian@stateful.com>",
+  "license": "Apache-2.0",
+  "contributors": [
+    "christian-bromann <christian@stateful.com>"
+  ],
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/stateful/vscoderx.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/stateful/vscoderx/issues"
+  },
+  "type": "module",
   "types": "dist/vrx.d.ts",
   "main": "dist/vrx.cjs.js",
   "module": "dist/vrx.esm.js",
@@ -15,14 +30,15 @@
     "compile": "rollup -c ./rollup.config.js",
     "clean": "rm -r dist",
     "test": "run-s test:*",
-    "test:lint": "eslint src --ext ts",
-    "test:unit": "echo \"to be defined\"",
+    "test:lint": "eslint src test",
+    "test:unit": "tap",
     "watch": "npm run compile -- --watch"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.0.6",
     "@rollup/plugin-typescript": "^8.3.0",
     "@types/node": "16.11.6",
+    "@types/tap": "^15.0.5",
     "@types/vscode": "^1.61.0",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
@@ -32,6 +48,8 @@
     "rollup": "^2.58.3",
     "rollup-plugin-cleanup": "^3.2.1",
     "rollup-plugin-terser": "^7.0.2",
+    "tap": "^15.0.10",
+    "ts-node": "^10.4.0",
     "tslib": "^2.3.1",
     "typescript": "^4.4.4"
   },
