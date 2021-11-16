@@ -56,10 +56,15 @@
     "compile:esm": "rollup -c ./rollup.esm.js",
     "compile:cjs": "rollup -c ./rollup.cjs.js",
     "clean": "rm -r dist",
+    "prepare": "husky install",
+    "release": "release-it --github.release --dry-run",
+    "release:ci": "npm run release -- --ci --npm.skipChecks --no-git.requireCleanWorkingDir",
+    "release:patch": "npm run release -- patch",
+    "release:minor": "npm run release -- minor",
+    "release:major": "npm run release -- major",
     "test": "run-s test:*",
     "test:lint": "eslint src test",
-    "test:unit": "tap",
-    "prepare": "husky install"
+    "test:unit": "tap"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.0.6",
@@ -75,6 +80,7 @@
     "jsdom": "^18.1.0",
     "mocha": "^9.1.3",
     "npm-run-all": "^4.1.5",
+    "release-it": "^14.11.7",
     "rollup": "^2.58.3",
     "rollup-plugin-cleanup": "^3.2.1",
     "rollup-plugin-multi-input": "^1.3.1",
