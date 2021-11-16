@@ -21,7 +21,7 @@ import {
   distinctUntilKeyChanged,
   throttleTime,
 } from 'rxjs';
-import { Messenger, WebviewProvider, Provider, Receiver } from './types';
+import type { Messenger, WebviewProvider, Provider, Receiver } from './types';
 
 export function wrapPanel(panel: vscode.WebviewPanel): WebviewProvider {
   return { webview: of(panel.webview), identifier: panel.viewType };
@@ -38,11 +38,7 @@ export function forWebviews<T>(
     map((wvs) => {
       return wvs.map((wv) => {
         const provider: Provider = {
-          onMessage: (listener) => {
-            wv.onDidReceiveMessage((event) => {
-              listener(event);
-            });
-          },
+          onMessage: wv.onDidReceiveMessage.bind(wv),
           postMessage: (message) => {
             return new Promise((resolve) => {
               wv.postMessage(message).then(() => resolve());
@@ -186,7 +182,7 @@ export class Client<T> {
           scan(this.fold, this.defaultValue),
           throttleTime(20),
           mergeMap((transient) => {
-            const namespaced: any = {};
+            const namespaced: Record<string, any> = {};
             namespaced[this.namespace] = transient;
             if (this._isBus) {
               return from(provider.postMessage(namespaced).then(() => transient));

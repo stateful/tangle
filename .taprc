@@ -4,7 +4,7 @@ flow: false
 check-coverage: true
 coverage: true
 
-branches: 58
-lines: 73
-functions: 57
-statements: 71
+branches: 66
+lines: 83
+functions: 75
+statements: 84

@@ -17,6 +17,10 @@ export interface WebviewProvider {
  */
 export interface Provider {
     onMessage: (listener: EventListener) => void;
+    /**
+     * ToDo(Christian): promise as return value might be required
+     * for webviews but not for other environments
+     */
     postMessage: (message: any) => Promise<void>;
 }
 
