@@ -1,4 +1,5 @@
-# vscoderx README
+vscoderx [![Test Changes](https://github.com/stateful/vscoderx/actions/workflows/test.yaml/badge.svg)](https://github.com/stateful/vscoderx/actions/workflows/test.yaml)
+========
 
 VS Code RX state synchronization across multiple webviews
 
