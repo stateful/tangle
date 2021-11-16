@@ -21,16 +21,7 @@ import {
   distinctUntilKeyChanged,
   throttleTime,
 } from 'rxjs';
-
-export interface WebviewProvider {
-  webview: Observable<vscode.Webview>;
-  identifier: string;
-}
-
-export interface Provider {
-  onMessage: (listener: EventListener) => void;
-  postMessage: (message: any) => Promise<void>;
-}
+import { Messenger, WebviewProvider, Provider, Receiver } from './types';
 
 export function wrapPanel(panel: vscode.WebviewPanel): WebviewProvider {
   return { webview: of(panel.webview), identifier: panel.viewType };
@@ -67,20 +58,29 @@ export function forWebviews<T>(
   );
 }
 
+/**
+ * Message client
+ * 
+ * @param namespace namespace of the message bus
+ * @param receiver event source, e.g. Window
+ * @param messenger event messenger, e.g. Process or `vscode` object
+ * @param defaultValue default message value
+ * @returns Client
+ */
 export function forDOM<T>(
   namespace: string,
+  receiver: Receiver,
+  messenger: Messenger,
   defaultValue: T,
-  window: Window,
-  vscode: { postMessage: (message: any) => void }
 ) {
   const provider: Provider = {
     onMessage: (listener: EventListener) => {
-      window.addEventListener('message', (event) => listener(event.data));
+      receiver.addEventListener('message', (event) => listener(event));
     },
     postMessage: (message: any) => {
-      vscode.postMessage(message);
+      messenger.postMessage(message);
       return Promise.resolve();
-    },
+    }
   };
 
   return new Client<T>(namespace, defaultValue, [provider]);
