@@ -235,3 +235,5 @@ export class Bus<T> extends Client<T> {
     super(namespace, defaultValue, providers, true);
   }
 }
+
+export * from './types';

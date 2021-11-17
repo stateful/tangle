@@ -2,7 +2,7 @@ import path from 'path';
 import url from 'url';
 import { Worker } from 'worker_threads';
 
-import tap from 'tap';
+import { test } from 'tap';
 
 import Channel from '../src/worker_threads';
 
@@ -19,7 +19,7 @@ const argv = [
     '--experimental-specifier-resolution=node'
 ];
 
-tap.test('should allow communication between multiple worker threads', async (t) => {
+test('should allow communication between multiple worker threads', async (t) => {
     const ch = new Channel<Payload>('test1', {});
     ch.register([
         new Worker(workerPath, { argv, workerData: { channel: 'test1', add: 1 } }),
@@ -39,7 +39,7 @@ tap.test('should allow communication between multiple worker threads', async (t)
     });
 });
 
-tap.test('should get bus by promise', async (t) => {
+test('should get bus by promise', async (t) => {
     const ch = new Channel<Payload>('test2', {});
     const bus = await ch.registerPromise([
         new Worker(workerPath, { argv, workerData: { channel: 'test2', add: 1 } }),
