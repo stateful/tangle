@@ -5,7 +5,7 @@
   "author": "Sebastian Tiedtke <sebastian@stateful.com>",
   "license": "Apache-2.0",
   "contributors": [
-    "christian-bromann <christian@stateful.com>"
+    "Christian Bromann <christian@stateful.com>"
   ],
   "engines": {
     "node": ">=12.0.0"
@@ -21,10 +21,20 @@
   "type": "module",
   "types": "dist/vrx.d.ts",
   "main": "dist/vrx.cjs.js",
-  "module": "dist/vrx.esm.js",
+  "module": "dist/vrx.js",
   "exports": {
-    "require": "./dist/vrx.cjs.js",
-    "import": "./dist/vrx.esm.js"
+    "/webviews": {
+      "require": "./dist/webviews.cjs.js",
+      "import": "./dist/webviews.js"
+    },
+    "/worker_threads": {
+      "require": "./dist/worker_threads.cjs.js",
+      "import": "./dist/worker_threads.js"
+    },
+    "default": {
+      "require": "./dist/vrx.cjs.js",
+      "import": "./dist/vrx.js"
+    }
   },
   "scripts": {
     "compile": "run-p compile:*",
