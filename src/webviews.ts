@@ -15,10 +15,12 @@ declare global {
     var acquireVsCodeApi: () => vscode.Webview;
 }
 
-export default class Channel<T> extends BaseChannel<T> {
+type ProviderType = WebviewProvider | vscode.WebviewPanel;
+
+export default class Channel<T> extends BaseChannel<ProviderType, T> {
     public providers: WebviewProvider[] = [];
 
-    register (providers: (WebviewProvider | vscode.WebviewPanel)[]) {
+    register (providers: ProviderType[]) {
         const providerWithPanels = providers.map((provider) => {
             const panel = provider as vscode.WebviewPanel;
             return panel.webview
@@ -30,7 +32,7 @@ export default class Channel<T> extends BaseChannel<T> {
         return merge(...providerWithPanels.map((p) => p.webview)).pipe(
             take(providers.length),
             toArray(),
-            map((ps) => ps.map((p) => (<Provider>{
+            map((ps: vscode.Webview[]) => ps.map((p) => (<Provider>{
                 onMessage: p.onDidReceiveMessage.bind(p),
                 postMessage: (message) => new Promise((resolve) => {
                     p.postMessage(message).then(() => resolve());

@@ -1,11 +1,20 @@
+import { Observable } from 'rxjs';
 import { Provider } from './types';
 import { Client, Bus } from './vrx';
 
-export default class BaseChannel<T> {
+export default abstract class BaseChannel<U, T> {
+    public abstract register (providers: U[]): Observable<Bus<T>>;
+
     constructor (
         private _namespace: string,
         private _defaultValue: T,
     ) {}
+
+    public registerPromise (providers: U[]): Promise<Bus<T>> {
+        return new Promise<Bus<T>>((resolve) => (
+            this.register(providers).subscribe(resolve)
+        ));
+    }
 
     protected _initiateBus (providers: Provider[]) {
         return new Bus<T>(this._namespace, this._defaultValue, providers);

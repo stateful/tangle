@@ -5,14 +5,15 @@ import {
     toArray,
     Observable,
 } from 'rxjs';
-import { Worker, parentPort } from 'worker_threads';
+import { parentPort } from 'worker_threads';
+import type { Worker } from 'worker_threads';
 
 import BaseChannel from './channel';
 import type { Provider } from './types';
 import type { Bus, Client } from './vrx';
 
 
-export default class Channel<T> extends BaseChannel<T> {
+export default class Channel<T> extends BaseChannel<Worker, T> {
     public providers: Worker[] = [];
 
     register (providers: Worker[]): Observable<Bus<T>> {
@@ -20,7 +21,7 @@ export default class Channel<T> extends BaseChannel<T> {
         return of(...providers).pipe(
             take(providers.length),
             toArray(),
-            map((ps) => ps.map((p: Worker) => (<Provider>{
+            map((ps) => ps.map((p) => (<Provider>{
                 onMessage: (listener) => {
                     p.on('message', listener);
                 },
