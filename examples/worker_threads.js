@@ -7,21 +7,21 @@ const filename = new URL('', import.meta.url).pathname;
 const ch = new Channel('test', {});
 
 if (isMainThread) {
-    ch.register([
+    const bus = await ch.registerPromise([
         new Worker(filename, { workerData: { id: 'worker #1' } }),
         new Worker(filename, { workerData: { id: 'worker #2' } }),
         new Worker(filename, { workerData: { id: 'worker #3' } })
-    ]).subscribe((bus) => {
-        bus.listen('onCustomEvent', (msg) =>
-            console.log('Received from worker thread:', msg));
+    ]);
 
-        bus.listen('onExit', () => {
-            console.log('Bye bye');
-            ch.providers.map((p) => p.terminate());
-        });
+    bus.listen('onCustomEvent', (msg) =>
+        console.log('Received from worker thread:', msg));
 
-        setTimeout(() => bus.broadcast({ onCustomWorkerEvent: 'worker #3' }), 100);
+    bus.listen('onExit', () => {
+        console.log('Bye bye');
+        ch.providers.map((p) => p.terminate());
     });
+
+    setTimeout(() => bus.broadcast({ onCustomWorkerEvent: 'worker #3' }), 100);
 } else {
     const client = ch.attach('test', {});
 
