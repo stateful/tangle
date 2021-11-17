@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - name: Build Package
-        run: npm run build
+        run: yarn build
       - name: Run tests
         run: npm test
       - name: Upload built package
@@ -37,7 +37,7 @@ jobs:
       - name: Clone Repository
         uses: actions/checkout@v2
       - name: Setup Node version
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
           node-version: 16
           registry-url: https://registry.npmjs.org/
@@ -52,7 +52,7 @@ jobs:
         with:
           name: compiled-package
       - name: Release
-        run: npm run release:ci -- ${{github.event.inputs.releaseType}}
+        run: yarn release:ci -- ${{github.event.inputs.releaseType}}
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
