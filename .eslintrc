@@ -11,6 +11,10 @@
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended"
   ],
+  "env": {
+      "node": true,
+      "es6": true
+  },
   "rules": {
     "@typescript-eslint/naming-convention": 1,
     "@typescript-eslint/semi": 1,

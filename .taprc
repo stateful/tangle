@@ -3,6 +3,12 @@ jsx: false
 flow: false
 check-coverage: true
 coverage: true
+files: test/**/*.test.ts
+node-arg: [
+    --loader=ts-node/esm,
+    --experimental-specifier-resolution=node,
+    --no-warnings
+]
 
 branches: 66
 lines: 83

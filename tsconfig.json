@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
-    "module": "CommonJS",
+    "module": "esnext",
     "moduleResolution": "node",
     "sourceMap": true,
     "declaration": true,
-    "declarationDir": ".",
+    "declarationDir": "./dist",
     "emitDeclarationOnly": true,
     "declarationMap": true,
-    "target": "ES2019",
+    "target": "ES2020",
     "outDir": "dist",
     "lib": ["es6", "dom"],
     "rootDir": "src",

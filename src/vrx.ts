@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import {
   BehaviorSubject,
   from,
@@ -15,72 +14,11 @@ import {
   scan,
   share,
   startWith,
-  take,
-  toArray,
   withLatestFrom,
   distinctUntilKeyChanged,
   throttleTime,
 } from 'rxjs';
-import type { Messenger, WebviewProvider, Provider, Receiver } from './types';
-
-export function wrapPanel(panel: vscode.WebviewPanel): WebviewProvider {
-  return { webview: of(panel.webview), identifier: panel.viewType };
-}
-
-export function forWebviews<T>(
-  namespace: string,
-  defaultValue: T,
-  wvProviders: WebviewProvider[]
-): Observable<Bus<T>> {
-  return merge(...wvProviders.map((wv) => wv.webview)).pipe(
-    take(wvProviders.length),
-    toArray(),
-    map((wvs) => {
-      return wvs.map((wv) => {
-        const provider: Provider = {
-          onMessage: wv.onDidReceiveMessage.bind(wv),
-          postMessage: (message) => {
-            return new Promise((resolve) => {
-              wv.postMessage(message).then(() => resolve());
-            });
-          },
-        };
-        return provider;
-      });
-    }),
-    map((providers) => {
-      return new Bus<T>(namespace, defaultValue, providers);
-    })
-  );
-}
-
-/**
- * Message client
- * 
- * @param namespace namespace of the message bus
- * @param receiver event source, e.g. Window
- * @param messenger event messenger, e.g. Process or `vscode` object
- * @param defaultValue default message value
- * @returns Client
- */
-export function forDOM<T>(
-  namespace: string,
-  receiver: Receiver,
-  messenger: Messenger,
-  defaultValue: T,
-) {
-  const provider: Provider = {
-    onMessage: (listener: EventListener) => {
-      receiver.addEventListener('message', (event) => listener(event));
-    },
-    postMessage: (message: any) => {
-      messenger.postMessage(message);
-      return Promise.resolve();
-    }
-  };
-
-  return new Client<T>(namespace, defaultValue, [provider]);
-}
+import type { Provider } from './types';
 
 export class Client<T> {
   protected readonly _outbound: Subject<T>;
