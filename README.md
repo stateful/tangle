@@ -147,4 +147,4 @@ Running into issues or are you missing a specific usecase? Feel free to [file an
 
 ---
 
-<div style="text-align: center"><small>Copyright 2021 © <a href="http://stateful.com/">Stateful</a> – Apache 2.0 License</small></div>
+<p align="center"><small>Copyright 2021 © <a href="http://stateful.com/">Stateful</a> – Apache 2.0 License</small></p>
