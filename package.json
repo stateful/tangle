@@ -34,7 +34,6 @@
     "test": "run-s test:*",
     "test:lint": "eslint src test",
     "test:unit": "tap",
-    "watch": "npm run compile -- --watch",
     "prepare": "husky install"
   },
   "devDependencies": {
