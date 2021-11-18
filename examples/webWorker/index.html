@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Tangle WebWorker Example</title>
+        <script type="module">
+            import Channel from '/dist/webworkers.js';
+
+            const ch = new Channel('webWorker', {})
+            const workerA = new Worker('/js/worker.js?id=workerA', { type: 'module' });
+            const workerB = new Worker('/js/worker.js?id=workerB', { type: 'module' });
+            const workerC = new Worker('/js/worker.js?id=workerC', { type: 'module' });
+
+            const bus = await ch.registerPromise([workerA, workerB, workerC]);
+
+            bus.listen('onCustomEvent', (msg) =>
+                console.log('Received from web worker:', msg));
+        </script>
+    </head>
+    <body>
+        This is a WebWorker example!
+    </body>
+</html>

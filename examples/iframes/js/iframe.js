@@ -2,7 +2,7 @@ import Channel from '/dist/iframes.js';
 
 const ch = new Channel('iframe', {});
 
-const client = ch.attach('test', {});
+const client = ch.attach();
 
 /**
  * listen to events from other iframes

@@ -31,6 +31,14 @@
       "require": "./dist/worker_threads.cjs.js",
       "import": "./dist/worker_threads.js"
     },
+    "/iframes": {
+      "require": "./dist/iframes.cjs.js",
+      "import": "./dist/iframes.js"
+    },
+    "/webworkers": {
+      "require": "./dist/webworkers.cjs.js",
+      "import": "./dist/webworkers.js"
+    },
     "default": {
       "require": "./dist/vrx.cjs.js",
       "import": "./dist/vrx.js"
@@ -70,6 +78,7 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
-    "rxjs": "^7.4.0"
+    "rxjs": "^7.4.0",
+    "web-worker": "^1.2.0"
   }
 }

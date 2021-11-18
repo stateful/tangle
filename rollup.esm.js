@@ -13,13 +13,17 @@ export default {
         'src/vrx.ts',
         'src/worker_threads.ts',
         'src/webviews.ts',
+        'src/webworkers.ts',
         'src/iframes.ts'
     ],
     output: {
         format: 'esm',
         dir: 'dist',
-        plugins: [terser()],
-        exports: 'auto'
+        exports: 'auto',
+        ...(process.env.NODE_ENV === 'production'
+            ? { plugins: [terser()] }
+            : {}
+        )
     },
     plugins: [
         multi({
@@ -32,6 +36,6 @@ export default {
         }),
         resolve({ extensions }),
         typescript({ tsconfig: './tsconfig.json' }),
-        cleanup({ comments: 'none' })
+        cleanup({ comments: 'none' }),
     ],
 };
