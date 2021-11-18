@@ -1,0 +1,23 @@
+<html>
+    <head>
+        <title>Tangle iFrame Example</title>
+        <script type="module">
+            import Channel from '/dist/iframes.js';
+
+            const ch = new Channel('iframe', {})
+
+            const bus = await ch.registerPromise([
+                ...document.querySelectorAll('iframe')
+            ])
+
+            bus.listen('onCustomEvent', (msg) =>
+                console.log('Received from iframe:', msg));
+        </script>
+    </head>
+    <body>
+        <iframe src="/iFrameA.html" frameborder="0"></iframe>
+        <iframe src="/iFrameB.html" frameborder="0"></iframe>
+        <iframe src="/iFrameC.html" frameborder="0"></iframe>
+        <iframe src="/iFrameD.html" frameborder="0"></iframe>
+    </body>
+</html>
