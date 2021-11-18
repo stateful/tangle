@@ -23,7 +23,7 @@ export default class WebViewChannel<T> extends BaseChannel<ProviderType, T> {
     register (providers: ProviderType[]) {
         const providerWithPanels = providers.map((provider) => {
             const panel = provider as vscode.WebviewPanel;
-            return panel.webview
+            return panel.viewType
                 ? <WebviewProvider>{ webview: of(panel.webview), identifier: panel.viewType }
                 : (provider as WebviewProvider);
         });
@@ -42,18 +42,13 @@ export default class WebViewChannel<T> extends BaseChannel<ProviderType, T> {
         );
     }
 
-    attach () {
-        if (typeof global.acquireVsCodeApi !== 'function') {
-            throw new Error('You can only attach to a message bus within a VSCode Webview');
-        }
-
-        const vscode = global.acquireVsCodeApi();
+    attach (webview: vscode.Webview) {
         return this._initiateClient(<Provider>{
             onMessage: (listener: EventListener) => {
-                window.addEventListener('message', (event) => listener(event));
+                window.addEventListener('message', (event) => listener(event.data));
             },
             postMessage: (message: any) => {
-                vscode.postMessage(message);
+                webview.postMessage(message);
                 return Promise.resolve();
             }
         });

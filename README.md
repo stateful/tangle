@@ -134,13 +134,14 @@ export async function activate (context: vscode.ExtensionContext) {
 }
 ```
 
-Within the webviews you can assign to the same channel and send messages across, e.g.:
+Within the webviews you can assign to the same channel and send messages across. The `attach` method takes the instance of the webview which you receive by calling `acquireVsCodeApi`, e.g.:
 
 ```js
-import Channel from 'tangle/worker_threads';
+import Channel from 'tangle/webviews';
 
+const vscode = acquireVsCodeApi()
 const ch = new Channel('vscode_state', {});
-const client = ch.attach();
+const client = ch.attach(vscode);
 
 client.broadcast({ onCustomEvent: 'Hello from webview 👋 !' });
 ```
