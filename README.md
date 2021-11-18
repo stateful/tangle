@@ -147,8 +147,6 @@ client.broadcast({ onCustomEvent: 'Hello from webview 👋 !' });
 
 You can find more examples for other environments in the [examples](./examples) folder.
 
-## Using
-
 # Contribute
 
 You have an idea on how to improve the package, please send us a pull request! Have a look into our [contributing guidelines](CONTRIBUTING.md).
