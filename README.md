@@ -1,22 +1,22 @@
-messagebus [![Test Changes](https://github.com/stateful/vscoderx/actions/workflows/test.yaml/badge.svg)](https://github.com/stateful/vscoderx/actions/workflows/test.yaml)
-==========
+Tangle [![Test Changes](https://github.com/stateful/vscoderx/actions/workflows/test.yaml/badge.svg)](https://github.com/stateful/vscoderx/actions/workflows/test.yaml)
+======
 
-> JavaScript message bus implementation for various of different sandbox environments, e.g. worker threads, vscode webviews etc.
+> JavaScript message bus implementation for various of different sandbox environments, e.g. [worker threads](https://nodejs.org/api/worker_threads.html), [web workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers), [iframes](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe), [Visual Studio Code Webviews](https://code.visualstudio.com/api/extension-guides/webview) etc.
 
-`messagebus` allows to sync states between various components that live in different sandbox environments, e.g. worker threads or VSCode webviews. It simplifies the communication between these sandboxes drastically. The package was mainly developed to help share data between various of webviews within a VSCode extension.
+`tangle` allows to sync states between various components that live in different sandbox environments, e.g. worker threads or VSCode webviews. It simplifies the communication between these sandboxes drastically. The package was mainly developed to help share data between various of webviews within a VSCode extension.
 
 # Install
 
 To install the package, run:
 
 ```sh
-npm i --save messagebus
+npm i --save tangle
 ```
 
 or via Yarn:
 
 ```sh
-yarn add messagebus
+yarn add tangle
 ```
 
 # Usage
@@ -25,11 +25,19 @@ This package allows to setup message buses in various of environments. Make sure
 
 - to broadcast messages between various worker threads
     ```js
-    import Channel from 'messagebus/worker_threads';
+    import Channel from 'tangle/worker_threads';
+    ```
+- to broadcast messages between various web workers in the browser
+    ```js
+    import Channel from 'tangle/webworkers';
     ```
 - to broadcast messages between VSCode webviews
     ```js
-    import Channel from 'messagebus/webviews';
+    import Channel from 'tangle/webviews';
+    ```
+- to broadcast messages between iFrames
+    ```js
+    import Channel from 'tangle/iframes';
     ```
 - more to come...
 
@@ -39,7 +47,7 @@ Within the parent thread, setup a message with a channel name and a default stat
 
 ```js
 import { Worker } from 'worker_threads';
-import Channel from 'messagebus/worker_threads';
+import Channel from 'tangle/worker_threads';
 
 const ch = new Channel('foobar', {});
 
@@ -65,7 +73,7 @@ Within the worker file you can attach to the message bus and share messages acro
 ```js
 // in ./worker.js
 import { workerData } from 'worker_threads';
-import Channel from 'messagebus/worker_threads';
+import Channel from 'tangle/worker_threads';
 
 const ch = new Channel('foobar', {});
 const client = ch.attach();
@@ -89,8 +97,8 @@ When you initialize your extension and all your webviews and panels, create a me
 
 ```ts
 import vscode from "vscode";
-import Channel from 'messagebus/webviews';
-import type { WebviewProvider } from 'messagebus';
+import Channel from 'tangle/webviews';
+import type { WebviewProvider } from 'tangle';
 
 class PanelViewProvider implements vscode.WebviewViewProvider, Vrx.WebviewProvider {
     public view?: vscode.WebviewView;
@@ -129,13 +137,17 @@ export async function activate (context: vscode.ExtensionContext) {
 Within the webviews you can assign to the same channel and send messages across, e.g.:
 
 ```js
-import Channel from 'messagebus/worker_threads';
+import Channel from 'tangle/worker_threads';
 
 const ch = new Channel('vscode_state', {});
 const client = ch.attach();
 
 client.broadcast({ onCustomEvent: 'Hello from webview 👋 !' });
 ```
+
+You can find more examples for other environments in the [examples](./examples) folder.
+
+## Using
 
 # Contribute
 
