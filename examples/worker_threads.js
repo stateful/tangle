@@ -23,7 +23,7 @@ if (isMainThread) {
 
     setTimeout(() => bus.broadcast({ onCustomWorkerEvent: 'worker #3' }), 100);
 } else {
-    const client = ch.attach('test', {});
+    const client = ch.attach();
 
     /**
      * listen to events within the same sandbox
