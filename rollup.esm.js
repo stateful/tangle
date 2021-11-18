@@ -1,4 +1,4 @@
-import fs from 'fs/promises';
+import fs from 'fs';
 import path from 'path';
 import typescript from '@rollup/plugin-typescript';
 import resolve from '@rollup/plugin-node-resolve';
@@ -10,7 +10,7 @@ const extensions = ['.js', '.ts'];
 
 export const createPackageJSON = (dir = 'esm', type = 'module') => ({
     name: 'create-package-json',
-    writeBundle: () => fs.writeFile(
+    writeBundle: () => fs.promises.writeFile(
         path.join(__dirname, 'dist', dir, 'package.json'),
         JSON.stringify({ type }, null, 4),
         'utf-8'
