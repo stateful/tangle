@@ -4,6 +4,7 @@ flow: false
 check-coverage: true
 coverage: true
 files: test/**/*.test.ts
+reporter: specy
 node-arg: [
     --loader=ts-node/esm,
     --experimental-specifier-resolution=node,
