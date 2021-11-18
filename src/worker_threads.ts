@@ -13,7 +13,7 @@ import type { Provider } from './types';
 import type { Bus, Client } from './vrx';
 
 
-export default class Channel<T> extends BaseChannel<Worker, T> {
+export default class WorkerThreadChannel<T> extends BaseChannel<Worker, T> {
     public providers: Worker[] = [];
 
     register (providers: Worker[]): Observable<Bus<T>> {

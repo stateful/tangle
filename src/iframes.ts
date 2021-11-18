@@ -8,7 +8,7 @@ import {
 import type { Provider } from './types';
 import BaseChannel from './channel';
 
-export default class Channel<T> extends BaseChannel<HTMLIFrameElement, T> {
+export default class IFrameChannel<T> extends BaseChannel<HTMLIFrameElement, T> {
     public providers: HTMLIFrameElement[] = [];
 
     constructor (

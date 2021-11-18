@@ -1,0 +1,7 @@
+{
+  "name": "worker_threads",
+  "description": "worker_thread implementation of tangle",
+  "main": "../dist/cjs/worker_threads.js",
+  "module": "../dist/mjs/worker_threads.js",
+  "types": "../dist/mjs/worker_threads.d.ts"
+}

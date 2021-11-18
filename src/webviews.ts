@@ -17,7 +17,7 @@ declare global {
 
 type ProviderType = WebviewProvider | vscode.WebviewPanel;
 
-export default class Channel<T> extends BaseChannel<ProviderType, T> {
+export default class WebViewChannel<T> extends BaseChannel<ProviderType, T> {
     public providers: WebviewProvider[] = [];
 
     register (providers: ProviderType[]) {

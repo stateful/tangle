@@ -19,35 +19,42 @@
     "url": "https://github.com/stateful/vscoderx/issues"
   },
   "type": "module",
-  "types": "dist/vrx.d.ts",
-  "main": "dist/vrx.cjs.js",
-  "module": "dist/vrx.js",
+  "types": "dist/esm/vrx.d.ts",
+  "main": "dist/cjs/vrx.js",
+  "module": "dist/esm/vrx.js",
   "exports": {
-    "/webviews": {
-      "require": "./dist/webviews.cjs.js",
-      "import": "./dist/webviews.js"
+    "./webviews": {
+      "require": "./dist/cjs/webviews.js",
+      "import": "./dist/esm/webviews.js"
     },
-    "/worker_threads": {
-      "require": "./dist/worker_threads.cjs.js",
-      "import": "./dist/worker_threads.js"
+    "./worker_threads": {
+      "require": "./dist/cjs/worker_threads.js",
+      "import": "./dist/esm/worker_threads.js"
     },
-    "/iframes": {
-      "require": "./dist/iframes.cjs.js",
-      "import": "./dist/iframes.js"
+    "./iframes": {
+      "require": "./dist/cjs/iframes.js",
+      "import": "./dist/esm/iframes.js"
     },
-    "/webworkers": {
-      "require": "./dist/webworkers.cjs.js",
-      "import": "./dist/webworkers.js"
+    "./webworkers": {
+      "require": "./dist/cjs/webworkers.js",
+      "import": "./dist/esm/webworkers.js"
     },
-    "default": {
-      "require": "./dist/vrx.cjs.js",
-      "import": "./dist/vrx.js"
+    ".": {
+      "require": "./dist/cjs/vrx.js",
+      "import": "./dist/esm/vrx.js"
     }
   },
+  "files": [
+      "dist/",
+      "webviews",
+      "worker_threads",
+      "iframes",
+      "webworkers"
+  ],
   "scripts": {
     "compile": "run-p compile:*",
     "compile:esm": "rollup -c ./rollup.esm.js",
-    "compile:cjs": "rollup -c ./rollup.cjs.js",
+    "compile:cjs": "rollup -c ./rollup.js",
     "clean": "rm -r dist",
     "test": "run-s test:*",
     "test:lint": "eslint src test",

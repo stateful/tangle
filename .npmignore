@@ -1,6 +1,6 @@
 node_modules
-src
 tests
+.github
 .eslintrc.json
 .nvmrc
 .yarnrc
