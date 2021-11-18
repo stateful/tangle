@@ -19,7 +19,9 @@ const argv = [
     '--experimental-specifier-resolution=node'
 ];
 
-test('should allow communication between multiple worker threads', async (t) => {
+test('should allow communication between multiple worker threads', (t) => {
+    t.plan(1);
+
     const ch = new Channel<Payload>('test1', {});
     ch.register([
         new Worker(workerPath, { argv, workerData: { channel: 'test1', add: 1 } }),
@@ -32,6 +34,7 @@ test('should allow communication between multiple worker threads', async (t) => 
             result += sum;
 
             if (result === 10) {
+                t.equal(result, 10);
                 ch.providers.map((p) => p.terminate());
                 t.end();
             }
@@ -40,6 +43,8 @@ test('should allow communication between multiple worker threads', async (t) => 
 });
 
 test('should get bus by promise', async (t) => {
+    t.plan(1);
+
     const ch = new Channel<Payload>('test2', {});
     const bus = await ch.registerPromise([
         new Worker(workerPath, { argv, workerData: { channel: 'test2', add: 1 } }),
@@ -48,13 +53,16 @@ test('should get bus by promise', async (t) => {
     ]);
 
     let result = 0;
-
-    bus.listen('onCalc', (sum: number) => {
-        result += sum;
-
-        if (result === 10) {
-            ch.providers.map((p) => p.terminate());
-            t.end();
-        }
+    await new Promise<void>((resolve) => {
+        bus.listen('onCalc', (sum: number) => {
+            result += sum;
+            if (result === 10) {
+                resolve();
+            }
+        });
     });
+
+
+    t.equal(result, 10);
+    ch.providers.map((p) => p.terminate());
 });

@@ -1,15 +1,20 @@
 import path from 'path';
 
-import typescript from "@rollup/plugin-typescript";
-import resolve from "@rollup/plugin-node-resolve";
+import typescript from '@rollup/plugin-typescript';
+import resolve from '@rollup/plugin-node-resolve';
 import cleanup from 'rollup-plugin-cleanup';
 import multi from 'rollup-plugin-multi-input';
-import { terser } from "rollup-plugin-terser";
+import { terser } from 'rollup-plugin-terser';
 
-const extensions = [".js", ".ts"];
+const extensions = ['.js', '.ts'];
 
 export default {
-    input: ["src/vrx.ts", "src/worker_threads.ts", "src/webviews.ts"],
+    input: [
+        'src/vrx.ts',
+        'src/worker_threads.ts',
+        'src/webviews.ts',
+        'src/iframes.ts'
+    ],
     output: {
         format: 'esm',
         dir: 'dist',
