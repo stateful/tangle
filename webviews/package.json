@@ -1,7 +1,7 @@
 {
   "name": "webviews",
-  "description": "webview implementation of tangle",
+  "description": "AWS SDK V3 access for OneTable",
   "main": "../dist/cjs/webviews.js",
-  "module": "../dist/mjs/webviews.js",
-  "types": "../dist/mjs/webviews.d.ts"
+  "module": "../dist/esm/webviews.js",
+  "types": "../dist/esm/webviews.d.ts"
 }

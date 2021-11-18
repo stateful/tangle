@@ -2,6 +2,6 @@
   "name": "webworkers",
   "description": "webworker implementation of tangle",
   "main": "../dist/cjs/webworkers.js",
-  "module": "../dist/mjs/webworkers.js",
-  "types": "../dist/mjs/webworkers.d.ts"
+  "module": "../dist/esm/webworkers.js",
+  "types": "../dist/esm/webworkers.d.ts"
 }

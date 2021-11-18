@@ -2,6 +2,6 @@
   "name": "iframes",
   "description": "iframe implementation of tangle",
   "main": "../dist/cjs/iframes.js",
-  "module": "../dist/mjs/iframes.js",
-  "types": "../dist/mjs/iframes.d.ts"
+  "module": "../dist/esm/iframes.js",
+  "types": "../dist/esm/iframes.d.ts"
 }
