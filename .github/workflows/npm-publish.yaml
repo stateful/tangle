@@ -8,6 +8,9 @@ on:
         required: true
         default: "patch"
 
+env:
+  NPM_TOKEN: ${{secrets.NPM_TOKEN}}
+
 jobs:
   test:
     runs-on: ubuntu-latest
