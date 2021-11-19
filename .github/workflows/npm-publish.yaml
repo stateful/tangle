@@ -58,7 +58,7 @@ jobs:
           name: compiled-package
           path: dist/
       - name: Release
-        run: yarn release:ci -- ${{github.event.inputs.releaseType}}
+        run: npm run release:ci -- ${{github.event.inputs.releaseType}}
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
