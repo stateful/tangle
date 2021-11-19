@@ -28,7 +28,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: compiled-package
-          path: build/
+          path: dist/
 
   release:
     needs: test
