@@ -1,7 +1,7 @@
 import tap from 'tap';
 import { Observable } from 'rxjs';
 
-import { Bus } from '../src/vrx';
+import { Bus } from '../src/tangle';
 
 tap.test('has a transient getter', (t) => {
     const bus = new Bus<object>("testing", {}, []);
