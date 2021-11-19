@@ -5,6 +5,8 @@ Tangle [![Test Changes](https://github.com/stateful/tangle/actions/workflows/tes
 
 `tangle` allows to sync states between various components that live in different sandbox environments, e.g. worker threads or VSCode webviews. It simplifies the communication between these sandboxes drastically. The package was mainly developed to help share data between various of webviews within a VSCode extension.
 
+❗❗ __Note:__ This package is in active development and not quite ready for prime just yet. Use it with cautions! ❗❗
+
 # Install
 
 To install the package, run:

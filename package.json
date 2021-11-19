@@ -58,7 +58,7 @@
     "compile:cjs": "rollup -c ./rollup.cjs.js",
     "clean": "rm -r dist",
     "prepare": "husky install",
-    "release": "release-it --github.release --dry-run",
+    "release": "release-it --github.release",
     "release:ci": "yarn release -- --ci --npm.skipChecks --no-git.requireCleanWorkingDir",
     "release:patch": "yarn release -- patch",
     "release:minor": "yarn release -- minor",
