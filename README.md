@@ -102,7 +102,7 @@ import vscode from "vscode";
 import Channel from 'tangle/webviews';
 import type { WebviewProvider } from 'tangle';
 
-class PanelViewProvider implements vscode.WebviewViewProvider, Vrx.WebviewProvider {
+class PanelViewProvider implements vscode.WebviewViewProvider, WebviewProvider {
     public view?: vscode.WebviewView;
     private _webview = new Subject<vscode.Webview>();
 

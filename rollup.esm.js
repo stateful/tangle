@@ -19,7 +19,7 @@ export const createPackageJSON = (dir = 'esm', type = 'module') => ({
 
 export default {
     input: [
-        'src/vrx.ts',
+        'src/tangle.ts',
         'src/worker_threads.ts',
         'src/webviews.ts',
         'src/webworkers.ts',

@@ -49,7 +49,7 @@ jobs:
       - name: Setup Git
         run: |
           git config --global user.name "oss-stateful-bot"
-          git config --global user.email "bot@stateful.com"
+          git config --global user.email "christian+wombot@stateful.com"
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - name: Download built package

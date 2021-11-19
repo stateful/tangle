@@ -19,9 +19,9 @@
     "url": "https://github.com/stateful/tangle/issues"
   },
   "type": "module",
-  "types": "dist/esm/vrx.d.ts",
-  "main": "dist/cjs/vrx.js",
-  "module": "dist/esm/vrx.js",
+  "types": "dist/esm/tangle.d.ts",
+  "main": "dist/cjs/tangle.js",
+  "module": "dist/esm/tangle.js",
   "exports": {
     "./webviews": {
       "require": "./dist/cjs/webviews.js",
@@ -40,8 +40,8 @@
       "import": "./dist/esm/webworkers.js"
     },
     ".": {
-      "require": "./dist/cjs/vrx.js",
-      "import": "./dist/esm/vrx.js"
+      "require": "./dist/cjs/tangle.js",
+      "import": "./dist/esm/tangle.js"
     }
   },
   "files": [
