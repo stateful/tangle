@@ -45,11 +45,11 @@
     }
   },
   "files": [
-      "dist/",
-      "webviews",
-      "worker_threads",
-      "iframes",
-      "webworkers"
+    "dist",
+    "webviews",
+    "worker_threads",
+    "iframes",
+    "webworkers"
   ],
   "scripts": {
     "build": "run-s compile",

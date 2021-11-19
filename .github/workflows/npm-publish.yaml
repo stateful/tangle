@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       releaseType:
-        description: 'Release type - major, minor or patch'
+        description: "Release type - major, minor or patch"
         required: true
-        default: 'patch'
+        default: "patch"
 
 jobs:
   test:
@@ -22,6 +22,8 @@ jobs:
         run: yarn install --frozen-lockfile
       - name: Build Package
         run: yarn build
+        env:
+          NODE_ENV: production
       - name: Run tests
         run: npm test
       - name: Upload built package
@@ -51,8 +53,13 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: compiled-package
-      - name: Release
-        run: yarn release:ci -- ${{github.event.inputs.releaseType}}
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          path: dist/
+      - run: |
+          ls -la
+          npm pack
+          cat ./dist/esm/iframes.js
+    #   - name: Release
+    #     run: yarn release:ci -- ${{github.event.inputs.releaseType}}
+    #     env:
+    #       NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+    #       GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
