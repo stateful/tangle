@@ -52,6 +52,7 @@
       "webworkers"
   ],
   "scripts": {
+    "build": "run-s compile",
     "compile": "run-p compile:*",
     "compile:esm": "rollup -c ./rollup.esm.js",
     "compile:cjs": "rollup -c ./rollup.cjs.js",
