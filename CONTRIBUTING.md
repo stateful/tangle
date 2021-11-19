@@ -1,6 +1,6 @@
-# Contributing to `messagebus`
+# Contributing to `tangle`
 
-**Thank you for your interest in `messagebus`. Your contributions are highly welcome.**
+**Thank you for your interest in `tangle`. Your contributions are highly welcome.**
 
 There are multiple ways of getting involved:
 
@@ -53,13 +53,13 @@ To build and work on this project you need to install:
 To get the code base, have [git](https://git-scm.com/downloads) installed and run:
 
 ```sh
-$ git clone git@github.com:stateful/messagebus.git
+$ git clone git@github.com:stateful/tangle.git
 ```
 
 then ensure to install all project dependencies:
 
 ```sh
-$ cd messagebus
+$ cd tangle
 $ yarn install
 ```
 
@@ -93,7 +93,7 @@ git commit -s -m "adding X to change Y"
 
 ## Release Project
 
-Contributor with push access to this repo can at any time make a release. To do so, just trigger the [GitHub Action](https://github.com/stateful/messagebus/actions?query=workflow%3A%22Manual+NPM+Publish%22) that releases the package. Ensure you pick the correct release type by following the [semantic versioning](https://semver.org/) principle.
+Contributor with push access to this repo can at any time make a release. To do so, just trigger the [GitHub Action](https://github.com/stateful/tangle/actions?query=workflow%3A%22Manual+NPM+Publish%22) that releases the package. Ensure you pick the correct release type by following the [semantic versioning](https://semver.org/) principle.
 
 ---
 

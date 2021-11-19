@@ -1,5 +1,5 @@
 {
-  "name": "vscoderx",
+  "name": "tangle",
   "version": "0.1.2",
   "description": "Minimal state-management implementation to connect insular views in VS Code",
   "author": "Sebastian Tiedtke <sebastian@stateful.com>",
@@ -12,11 +12,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/stateful/vscoderx.git"
+    "url": "git://github.com/stateful/tangle.git"
   },
   "keywords": [],
   "bugs": {
-    "url": "https://github.com/stateful/vscoderx/issues"
+    "url": "https://github.com/stateful/tangle/issues"
   },
   "type": "module",
   "types": "dist/esm/vrx.d.ts",
