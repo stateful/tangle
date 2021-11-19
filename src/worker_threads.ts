@@ -10,7 +10,7 @@ import type { Worker } from 'worker_threads';
 
 import BaseChannel from './channel';
 import type { Provider } from './types';
-import type { Bus, Client } from './vrx';
+import type { Bus, Client } from './tangle';
 
 
 export default class WorkerThreadChannel<T> extends BaseChannel<Worker, T> {

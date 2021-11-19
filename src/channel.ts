@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 import { Provider } from './types';
-import { Client, Bus } from './vrx';
+import { Client, Bus } from './tangle';
 
 export default abstract class BaseChannel<U, T> {
     public abstract register (providers: U[]): Observable<Bus<T>>;
