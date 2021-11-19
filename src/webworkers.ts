@@ -8,8 +8,7 @@ import {
 
 import BaseChannel from './channel';
 import type { Provider } from './types';
-import type { Bus, Client } from './vrx';
-
+import type { Bus, Client } from './tangle';
 
 export default class WebWorkerChannel<T> extends BaseChannel<Worker, T> {
     public providers: Worker[] = [];
