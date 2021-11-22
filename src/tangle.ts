@@ -48,11 +48,24 @@ export class Client<T> {
         return this._transient;
     }
 
-    public broadcast(transient: T) {
-        this._outbound.next(transient);
+    /**
+     * share state with other sandboxes
+     * @param state to share with other sandboxes
+     */
+    public broadcast(state: T) {
+        this._outbound.next(state);
     }
 
+    /**
+     * event handler to act on changes to certain state properties
+     * @param key state property
+     * @param fn  handler to call once state of given property changes
+     */
     public listen(key: keyof T, fn: (...args: any[]) => void) {
+        if (this._isBus) {
+            fn(this.defaultValue[key]);
+        }
+
         this.events
             .pipe(
                 pluck(key),
@@ -108,25 +121,23 @@ export class Client<T> {
             outGrouped$.pipe(pluck('transient'))
         );
 
-        const inEvent$ = inGrouped$.pipe(pluck('event'));
-        inEvent$.subscribe((event) => {
-            this._events.next(event);
-        });
+        const inStateUpdates$ = inGrouped$.pipe(pluck('transient'));
+        if (!this._isBus) {
+            inStateUpdates$.subscribe((state) => {
+                this._events.next(state);
+            });
+        }
 
         const transient$ = merge(providers).pipe(
             this.fromProviders(),
-            mergeMap((provider) => {
+            mergeMap(() => {
                 return transientGrouped$.pipe(
                     scan(this.fold, this.defaultValue),
                     throttleTime(20),
                     mergeMap((transient) => {
                         const namespaced: Record<string, any> = {};
                         namespaced[this.namespace] = transient;
-                        if (this._isBus) {
-                            return from(provider.postMessage(namespaced).then(() => transient));
-                        } else {
-                            return of(transient);
-                        }
+                        return of(transient);
                     })
                 );
             }),
@@ -137,21 +148,20 @@ export class Client<T> {
             share()
         );
 
-        const outEvent$ = outGrouped$.pipe(pluck('event'));
-        const event$ = this._isBus ? merge(outEvent$, inEvent$) : outEvent$;
+        const outEvent$ = outGrouped$.pipe(pluck('transient'));
+        const event$ = this._isBus ? merge(outEvent$, inStateUpdates$) : outEvent$;
 
         event$
             .pipe(
                 withLatestFrom(transient$),
-                map(([event, transient]) => {
-                    return { ...transient, ...event };
-                }),
+                map(([event, transient]) => ({ ...transient, ...event })),
                 map((combo) => {
-                    const namespaced: any = {};
-                    namespaced[this.namespace] = combo;
+                    if (this._isBus) {
+                        this._events.next(combo);
+                    }
 
                     this.providers.forEach((provider) => {
-                        provider.postMessage(namespaced);
+                        provider.postMessage({ [this.namespace]: combo });
                     });
                 })
             )
@@ -169,8 +179,7 @@ export class Client<T> {
                     provider.onMessage((payload: any) => {
                         const unpacked = payload[this.namespace];
                         if (unpacked) {
-                            const payload = unpacked as T;
-                            this._inbound.next(payload);
+                            this._inbound.next(unpacked as T);
                         }
                     });
                     return provider;
@@ -205,25 +214,17 @@ export class Client<T> {
             return source.pipe(
                 map((payload) => {
                     const entries = Object.entries(payload);
-                    const grouped: { transient?: T; event?: T }[] = entries.map((entry) => {
-                        const isPrefixed = entry[0].indexOf('on') === 0;
-                        const obj = this.fromEntries(this.defaultValue, entry);
-                        if (isPrefixed) {
-                            return { event: obj };
+                    const grouped = entries.reduce((group, [k, v]) => {
+                        const isEvent = !Object.keys(this.defaultValue).includes(k);
+                        if (isEvent) {
+                            group.event = { [k]: v };
+                        } else {
+                            // @ts-expect-error foo
+                            group.transient[k] = v;
                         }
-                        return { transient: obj };
-                    });
+                        return group;
+                    }, { transient: this.defaultValue } as { transient: T; event?: any });
                     return grouped;
-                }),
-                map((grouped) => {
-                    return {
-                        transient: grouped.reduce((accum, one) => {
-                            return { ...accum, ...one.transient };
-                        }, this.defaultValue),
-                        event: grouped.reduce((accum, one) => {
-                            return { ...accum, ...one.event };
-                        }, this.defaultValue),
-                    };
                 })
             );
         };
