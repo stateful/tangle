@@ -111,7 +111,7 @@ export class Client<T> {
     /**
      * Get a listing the events for which the emitter has listeners.
      * The values in the array are strings or Symbols.
-     * @returns array of listings
+     * @returns `(string | symbol)[]`
      */
     public eventNames () {
         return [...this._eventMap.keys()];
@@ -120,11 +120,19 @@ export class Client<T> {
     /**
      * Returns the number of listeners listening to the event named eventName.
      * @param eventName The name of the event being listened for
-     * @returns <integer>
+     * @returns `integer`
      */
     public listenerCount (eventName: EventName) {
-        const events = this._eventMap.get(eventName) || ([] as Listener[]);
-        return events.length;
+        return this.listeners(eventName).length;
+    }
+
+    /**
+     * Returns a copy of the array of listeners for the event named eventName.
+     * @param eventName The name of the event being listened for
+     * @returns `Function[]`
+     */
+    public listeners (eventName: EventName) {
+        return this._eventMap.get(eventName) || ([] as Listener[]);
     }
 
     private _registerEvent(eventName: EventName, fn: Listener, isOnce = false) {

@@ -38,3 +38,13 @@ tap.test('allows to get listener count', (t) => {
     t.equal(bus.listenerCount('foobar'), 0);
     t.end();
 });
+
+tap.test('allows to get listeners of certain event', (t) => {
+    const noop = () => { /** */ };
+    const bus = new Bus<object>("testing", {}, []);
+    bus.on('foo', noop);
+    const fn = bus.listeners('foo')[0];
+
+    t.equal(fn, noop);
+    t.end();
+});
