@@ -148,7 +148,7 @@ export class Client<T> {
                     }
 
                     if (event.transient) {
-                        return { transient: { ...event.transient, ...transient } };
+                        return { transient: { ...transient, ...event.transient } };
                     }
 
                     throw new Error(`Neither event nor state change was given`);

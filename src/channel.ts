@@ -7,7 +7,7 @@ export default abstract class BaseChannel<U, T> {
 
     constructor (
         private _namespace: string,
-        private _defaultValue: T,
+        private _defaultValue: Required<T>,
     ) {}
 
     public registerPromise (providers: U[]): Promise<Bus<T>> {

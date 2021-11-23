@@ -7,8 +7,13 @@ import { test } from 'tap';
 import Channel from '../src/worker_threads';
 
 interface Payload {
-    onCalc?: number
+    someProp?: number
 }
+const defaultValue = {
+    someProp: 5
+};
+
+const EXPECTED_SUM = 15;
 
 // eslint-disable-next-line
 // @ts-ignore VSCode has problems detecting ESM here
@@ -22,7 +27,7 @@ const argv = [
 test('should allow communication between multiple worker threads', (t) => {
     t.plan(1);
 
-    const ch = new Channel<Payload>('test1', {});
+    const ch = new Channel<Payload>('test1', defaultValue);
     ch.register([
         new Worker(workerPath, { argv, workerData: { channel: 'test1', add: 1 } }),
         new Worker(workerPath, { argv, workerData: { channel: 'test1', add: 3 } }),
@@ -30,11 +35,11 @@ test('should allow communication between multiple worker threads', (t) => {
     ]).subscribe((bus) => {
         let result = 0;
 
-        bus.listen('onCalc', (sum: number) => {
+        bus.listen('someProp', (sum: number) => {
             result += sum;
 
-            if (result === 10) {
-                t.equal(result, 10);
+            if (result === EXPECTED_SUM) {
+                t.equal(result, EXPECTED_SUM);
                 ch.providers.map((p) => p.terminate());
                 t.end();
             }
@@ -45,7 +50,7 @@ test('should allow communication between multiple worker threads', (t) => {
 test('should get bus by promise', async (t) => {
     t.plan(1);
 
-    const ch = new Channel<Payload>('test2', {});
+    const ch = new Channel<Payload>('test2', defaultValue);
     const bus = await ch.registerPromise([
         new Worker(workerPath, { argv, workerData: { channel: 'test2', add: 1 } }),
         new Worker(workerPath, { argv, workerData: { channel: 'test2', add: 3 } }),
@@ -54,15 +59,15 @@ test('should get bus by promise', async (t) => {
 
     let result = 0;
     await new Promise<void>((resolve) => {
-        bus.listen('onCalc', (sum: number) => {
+        bus.listen('someProp', (sum: number) => {
             result += sum;
-            if (result === 10) {
+            if (result === EXPECTED_SUM) {
                 resolve();
             }
         });
     });
 
 
-    t.equal(result, 10);
+    t.equal(result, EXPECTED_SUM);
     ch.providers.map((p) => p.terminate());
 });
