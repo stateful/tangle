@@ -17,6 +17,7 @@ import {
     withLatestFrom,
     throttleTime,
     first,
+    Subscription,
 } from 'rxjs';
 import type { Provider } from './types';
 
@@ -92,7 +93,7 @@ export class Client<T> {
      * @param fn        event handler
      */
     public on(eventName: string, fn: (...args: any[]) => void) {
-        this.events
+        return this.events
             .pipe(
                 pluck('event'),
                 filter(Boolean),
@@ -103,8 +104,13 @@ export class Client<T> {
             .subscribe(fn);
     }
 
+    /**
+     * listen to a certain event shared within given namespace once
+     * @param eventName name of the event
+     * @param fn        event handler
+     */
     public once(eventName: string, fn: (...args: any[]) => void) {
-        this.events
+        return this.events
             .pipe(
                 pluck('event'),
                 filter(Boolean),
@@ -114,6 +120,14 @@ export class Client<T> {
                 first()
             )
             .subscribe(fn);
+    }
+
+    /**
+     * listen to a certain event shared within given namespace once
+     * @param subscription observable of event that should be unsubscribed
+     */
+     public off(subscription: Subscription) {
+        subscription.unsubscribe();
     }
 
     protected register(): Observable<T> {

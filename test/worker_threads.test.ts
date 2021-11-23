@@ -22,6 +22,7 @@ const EXPECTED_SUM = 15;
 const dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const workerPath = path.join(dirname, '__fixtures__', 'worker.mjs');
 const workerOncePath = path.join(dirname, '__fixtures__', 'worker.once.mjs');
+const workerOffPath = path.join(dirname, '__fixtures__', 'worker.off.mjs');
 const argv = [
     '--loader=ts-node/esm',
     '--experimental-specifier-resolution=node'
@@ -112,14 +113,33 @@ test('should allow to listen once', async (t) => {
         new Worker(workerOncePath, { argv, workerData: { channel: namespace } }),
     ]);
 
-    const result = await new Promise<number>((resolve) => {
-        bus.emit('add', 2);
-        bus.emit('add', 5);
-        bus.emit('add', 15);
-        bus.emit('getResult', {});
-        bus.on('result', resolve);
-    });
+    bus.emit('add', 2);
+    bus.emit('add', 5);
+    bus.emit('add', 15);
+    bus.emit('getResult', {});
+    const result = await new Promise<number>(
+        (resolve) => bus.on('result', resolve));
 
     t.equal(result, 2);
+    ch.providers.map((p) => p.terminate());
+});
+
+test('should allow to unsubscribe', async (t) => {
+    const namespace = 'test5';
+    t.plan(1);
+
+    const ch = new Channel<Payload>(namespace, defaultValue);
+    const bus = await ch.registerPromise([
+        new Worker(workerOffPath, { argv, workerData: { channel: namespace } }),
+    ]);
+
+    bus.emit('add', 2);
+    bus.emit('add', 5);
+    bus.emit('add', 15);
+    bus.emit('getResult', {});
+    const result = await new Promise<number>(
+        (resolve) => bus.on('result', resolve));
+
+    t.equal(result, 7);
     ch.providers.map((p) => p.terminate());
 });
