@@ -9,11 +9,9 @@ import {
     filter,
     map,
     mergeMap,
-    pairwise,
     pluck,
     scan,
     share,
-    startWith,
     withLatestFrom,
     throttleTime,
     first,
@@ -24,11 +22,11 @@ import type { Provider } from './types';
 type Payload<T> = { transient: T, event?: Record<string, any> };
 
 export class Client<T> {
-    protected readonly _outbound: Subject<Payload<T>>;
-    protected readonly _inbound: BehaviorSubject<Payload<T>>;
-    protected readonly _events: Subject<Payload<T>>;
+    private readonly _outbound: Subject<Payload<T>>;
+    private readonly _inbound: BehaviorSubject<Payload<T>>;
+    private readonly _events: Subject<Payload<T>>;
 
-    protected readonly _transient: Observable<T>;
+    private readonly _transient: Observable<T>;
 
     constructor(
         public readonly namespace: string,
@@ -40,7 +38,7 @@ export class Client<T> {
         this._inbound = new BehaviorSubject<Payload<T>>({ transient: this.defaultValue });
         this._events = new Subject<Payload<T>>();
 
-        this._transient = this.register();
+        this._transient = this._register();
     }
 
     public get events() {
@@ -126,11 +124,11 @@ export class Client<T> {
      * listen to a certain event shared within given namespace once
      * @param subscription observable of event that should be unsubscribed
      */
-     public off(subscription: Subscription) {
+    public off(subscription: Subscription) {
         subscription.unsubscribe();
     }
 
-    protected register(): Observable<T> {
+    private _register(): Observable<T> {
         const providers = from(this.providers);
         const inGrouped$ = this._inbound;
         const outGrouped$ = this._outbound;
@@ -140,10 +138,10 @@ export class Client<T> {
             outGrouped$.pipe(pluck('transient'))
         );
         const transient$ = merge(providers).pipe(
-            this.fromProviders(),
+            this._fromProviders(),
             mergeMap(() => {
                 return transientGrouped$.pipe(
-                    scan(this.fold, this.defaultValue),
+                    scan(this._fold, this.defaultValue),
                     throttleTime(20),
                     mergeMap((transient) => {
                         const namespaced: Record<string, any> = {};
@@ -154,7 +152,7 @@ export class Client<T> {
             }),
             bufferCount(this.providers.length),
             map((transients) => {
-                return transients.reduce(this.fold, this.defaultValue);
+                return transients.reduce(this._fold, this.defaultValue);
             }),
             share()
         );
@@ -200,7 +198,7 @@ export class Client<T> {
         return transient$;
     }
 
-    protected fromProviders() {
+    private _fromProviders() {
         return (source: Observable<Provider>) => {
             return source.pipe(
                 map((provider) => {
@@ -216,29 +214,12 @@ export class Client<T> {
         };
     }
 
-    protected dedupe() {
-        return (source: Observable<T>) => {
-            return source.pipe(
-                startWith(this.defaultValue),
-                pairwise(),
-                filter(([prev, curr]) => JSON.stringify(prev) !== JSON.stringify(curr)),
-                map(([, curr]) => curr)
-            );
-        };
-    }
-
-    protected fold(acc?: T, one?: T): T {
+    private _fold(acc?: T, one?: T): T {
         if (!acc || !one) {
             return acc || one as T;
         }
 
         return { ...acc, ...one };
-    }
-
-    protected fromEntries(accum: T, [k, v]: [string, any]) {
-        const r: any = { ...accum };
-        r[k] = v;
-        return r as T;
     }
 }
 
