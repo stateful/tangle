@@ -17,7 +17,7 @@ import {
     first,
     Subscription,
 } from 'rxjs';
-import type { Provider, EventName, Payload, Listener } from './types';
+import type { Provider, EventName, Payload, Listener, RegisteredEvent } from './types';
 
 export class Client<T> {
     private readonly _outbound: Subject<Payload<T>>;
@@ -25,7 +25,7 @@ export class Client<T> {
     private readonly _events: Subject<Payload<T>>;
 
     private readonly _transient: Observable<T>;
-    private readonly _eventMap: Map<EventName, Listener[]> = new Map();
+    private readonly _eventMap: Map<EventName, RegisteredEvent[]> = new Map();
 
     constructor(
         public readonly namespace: string,
@@ -132,18 +132,28 @@ export class Client<T> {
      * @returns `Function[]`
      */
     public listeners (eventName: EventName) {
-        return this._eventMap.get(eventName) || ([] as Listener[]);
+        return (this._eventMap.get(eventName) || ([] as RegisteredEvent[]))
+            .map(({ fn }) => fn);
+    }
+
+    /**
+     * Removes all listeners, or those of the specified eventName.
+     */
+    public removeAllListeners () {
+        const registeredEvents = [...this._eventMap.values()];
+        for (const events of registeredEvents) {
+            events.forEach(({ obs }) => obs.unsubscribe());
+        }
+        return this;
     }
 
     private _registerEvent(eventName: EventName, fn: Listener, isOnce = false) {
-        const events = this._eventMap.get(eventName) || ([] as Listener[]);
-        events.push(fn);
-        this._eventMap.set(eventName, events);
-
+        const events = this._eventMap.get(eventName) || ([] as RegisteredEvent[]);
         const index = typeof eventName === 'string'
             ? eventName.toLocaleLowerCase()
             : eventName.toString().toLowerCase();
-        return this.events
+
+        const obs = this.events
             .pipe(
                 pluck('event'),
                 filter(Boolean),
@@ -158,6 +168,10 @@ export class Client<T> {
                 }
             )
             .subscribe(fn);
+
+        events.push({ fn, obs });
+        this._eventMap.set(eventName, events);
+        return obs;
     }
 
     private _register(): Observable<T> {

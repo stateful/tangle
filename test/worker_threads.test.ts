@@ -23,6 +23,7 @@ const dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const workerPath = path.join(dirname, '__fixtures__', 'worker.mjs');
 const workerOncePath = path.join(dirname, '__fixtures__', 'worker.once.mjs');
 const workerOffPath = path.join(dirname, '__fixtures__', 'worker.off.mjs');
+const workerRemoveAllListenerPath = path.join(dirname, '__fixtures__', 'worker.removeAllListeners.mjs');
 const argv = [
     '--loader=ts-node/esm',
     '--experimental-specifier-resolution=node'
@@ -141,5 +142,28 @@ test('should allow to unsubscribe', async (t) => {
         (resolve) => bus.on('result', resolve));
 
     t.equal(result, 7);
+    ch.providers.map((p) => p.terminate());
+});
+
+test('should allow to unsubscribe', async (t) => {
+    const namespace = 'test6';
+    t.plan(1);
+
+    const ch = new Channel<Payload>(namespace, defaultValue);
+    const bus = await ch.registerPromise([
+        new Worker(workerRemoveAllListenerPath, { argv, workerData: { channel: namespace } }),
+    ]);
+
+    bus.emit('add', 2);
+    bus.emit('mul', 3);
+    bus.emit('off', {});
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    bus.emit('add', 5);
+    bus.emit('mul', 2);
+    bus.emit('getResult', {});
+    const result = await new Promise<number>(
+        (resolve) => bus.on('result', resolve));
+
+    t.equal(result, 6);
     ch.providers.map((p) => p.terminate());
 });
