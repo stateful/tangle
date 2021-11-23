@@ -9,4 +9,4 @@ const client = ch.attach();
  */
 let result = 0;
 client.once('add', (sum) => (result += sum));
-client.addListener('getResult', () => client.emit('result', result));
+client.on('getResult', () => client.emit('result', result));

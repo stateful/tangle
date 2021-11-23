@@ -74,16 +74,6 @@ export class Client<T> {
     }
 
     /**
-     * Alias for `instance.on(eventName, listener)`.
-     * @param eventName name of the event
-     * @param fn        event handler
-     * @returns         event as obserable
-     */
-    public addListener (eventName: EventName, fn: Listener) {
-        return this.on(eventName, fn);
-    }
-
-    /**
      * broadcast events with other sandboxes
      * @param eventName name of the event
      * @param payload   event payload
@@ -96,7 +86,6 @@ export class Client<T> {
      * listen to events shared within given namespace
      * @param eventName name of the event
      * @param fn        event handler
-     * @returns         event as obserable
      */
     public on(eventName: EventName, fn: Listener) {
         return this._registerEvent(eventName, fn);
@@ -106,7 +95,6 @@ export class Client<T> {
      * listen to a certain event shared within given namespace once
      * @param eventName name of the event
      * @param fn        event handler
-     * @returns         event as obserable
      */
     public once(eventName: EventName, fn: Listener) {
         return this._registerEvent(eventName, fn, true);
