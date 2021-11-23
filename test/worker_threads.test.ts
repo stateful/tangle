@@ -8,9 +8,11 @@ import Channel from '../src/worker_threads';
 
 interface Payload {
     someProp?: number
+    action?: { method: string, args: any[] }
 }
 const defaultValue = {
-    someProp: 5
+    someProp: 5,
+    action: { method: 'noop', args: [] }
 };
 
 const EXPECTED_SUM = 15;
@@ -25,13 +27,14 @@ const argv = [
 ];
 
 test('should allow communication between multiple worker threads', (t) => {
+    const namespace = 'test1';
     t.plan(1);
 
-    const ch = new Channel<Payload>('test1', defaultValue);
+    const ch = new Channel<Payload>(namespace, defaultValue);
     ch.register([
-        new Worker(workerPath, { argv, workerData: { channel: 'test1', add: 1 } }),
-        new Worker(workerPath, { argv, workerData: { channel: 'test1', add: 3 } }),
-        new Worker(workerPath, { argv, workerData: { channel: 'test1', add: 6 } })
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 1 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 3 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 6 } })
     ]).subscribe((bus) => {
         let result = 0;
 
@@ -48,13 +51,14 @@ test('should allow communication between multiple worker threads', (t) => {
 });
 
 test('should get bus by promise', async (t) => {
+    const namespace = 'test1';
     t.plan(1);
 
-    const ch = new Channel<Payload>('test2', defaultValue);
+    const ch = new Channel<Payload>(namespace, defaultValue);
     const bus = await ch.registerPromise([
-        new Worker(workerPath, { argv, workerData: { channel: 'test2', add: 1 } }),
-        new Worker(workerPath, { argv, workerData: { channel: 'test2', add: 3 } }),
-        new Worker(workerPath, { argv, workerData: { channel: 'test2', add: 6 } })
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 1 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 3 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 6 } })
     ]);
 
     let result = 0;
@@ -69,5 +73,31 @@ test('should get bus by promise', async (t) => {
 
 
     t.equal(result, EXPECTED_SUM);
+    ch.providers.map((p) => p.terminate());
+});
+
+test('should allow to send events', async (t) => {
+    const namespace = 'test3';
+    t.plan(1);
+
+    const ch = new Channel<Payload>(namespace);
+    const bus = await ch.registerPromise([
+        new Worker(workerPath, { argv, workerData: { channel: namespace, event: 1 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, event: 3 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, event: 6 } })
+    ]);
+
+    let result = 0;
+    await new Promise<void>((resolve) => {
+        bus.on('onFoobar', (sum: number) => {
+            result += sum;
+            if (result === 10) {
+                resolve();
+            }
+        });
+    });
+
+
+    t.equal(result, 10);
     ch.providers.map((p) => p.terminate());
 });
