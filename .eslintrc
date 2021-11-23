@@ -16,12 +16,13 @@
       "es6": true
   },
   "rules": {
-    "@typescript-eslint/naming-convention": 1,
-    "@typescript-eslint/semi": 1,
+    "@typescript-eslint/naming-convention": 2,
+    "@typescript-eslint/semi": 2,
     "@typescript-eslint/no-explicit-any": 0,
-    "curly": 1,
-    "eqeqeq": 1,
-    "no-throw-literal": 1,
+    "@typescript-eslint/no-unused-vars": 2,
+    "curly": 2,
+    "eqeqeq": 2,
+    "no-throw-literal": 2,
     "semi": 0
   },
   "ignorePatterns": ["out", "dist", "**/*.d.ts"]

@@ -15,7 +15,6 @@ import {
     withLatestFrom,
     throttleTime,
     first,
-    Subscription,
 } from 'rxjs';
 import type { Provider, EventName, Payload, Listener, RegisteredEvent } from './types';
 
@@ -104,8 +103,12 @@ export class Client<T> {
      * listen to a certain event shared within given namespace once
      * @param subscription observable of event that should be unsubscribed
      */
-    public off(subscription: Subscription) {
-        subscription.unsubscribe();
+    public off(eventName: EventName, listener: Listener) {
+        const events = this._eventMap.get(eventName) || ([] as RegisteredEvent[]);
+        events
+            .filter(({ fn }) => fn === listener)
+            .forEach(({ obs }) => obs.unsubscribe());
+        return this;
     }
 
     /**
