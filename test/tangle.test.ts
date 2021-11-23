@@ -20,3 +20,21 @@ tap.test('has a list if event names', (t) => {
     t.matchSnapshot(bus.eventNames());
     t.end();
 });
+
+tap.test('allows to get listener count', (t) => {
+    const noop = () => { /** */ };
+    const bus = new Bus<object>("testing", {}, []);
+    bus.on('foo', noop);
+    bus.on('foo', noop);
+    bus.on('foo', noop);
+    bus.on('bar', noop);
+
+    const sym = Symbol('symbol');
+    bus.on(sym, noop);
+    bus.on(sym, noop);
+    t.equal(bus.listenerCount('foo'), 3);
+    t.equal(bus.listenerCount('bar'), 1);
+    t.equal(bus.listenerCount(sym), 2);
+    t.equal(bus.listenerCount('foobar'), 0);
+    t.end();
+});

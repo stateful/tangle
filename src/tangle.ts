@@ -117,6 +117,16 @@ export class Client<T> {
         return [...this._eventMap.keys()];
     }
 
+    /**
+     * Returns the number of listeners listening to the event named eventName.
+     * @param eventName The name of the event being listened for
+     * @returns <integer>
+     */
+    public listenerCount (eventName: EventName) {
+        const events = this._eventMap.get(eventName) || ([] as Listener[]);
+        return events.length;
+    }
+
     private _registerEvent(eventName: EventName, fn: Listener, isOnce = false) {
         const events = this._eventMap.get(eventName) || ([] as Listener[]);
         events.push(fn);
