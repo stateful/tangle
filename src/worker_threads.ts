@@ -42,7 +42,7 @@ export default class WorkerThreadChannel<T> extends BaseChannel<Worker, T> {
         const pp = parentPort;
         return this._initiateClient(<Provider>{
             onMessage: (listener: EventListener) => {
-                pp.on('message', (event) => listener(event));
+                pp.on('message', listener);
             },
             postMessage: (message: any) => {
                 pp.postMessage(message);
