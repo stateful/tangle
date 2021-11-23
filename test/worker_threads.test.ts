@@ -80,7 +80,7 @@ test('should allow to send events', async (t) => {
     const namespace = 'test3';
     t.plan(1);
 
-    const ch = new Channel<Payload>(namespace);
+    const ch = new Channel<Payload>(namespace, defaultValue);
     const bus = await ch.registerPromise([
         new Worker(workerPath, { argv, workerData: { channel: namespace, event: 1 } }),
         new Worker(workerPath, { argv, workerData: { channel: namespace, event: 3 } }),
