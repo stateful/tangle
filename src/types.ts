@@ -10,6 +10,10 @@ export interface WebviewProvider {
     identifier: string;
 }
 
+export type EventName = string | symbol;
+export type Payload<T> = { transient: T, event?: Record<string, any> };
+export type Listener = (...args: any[]) => void;
+
 /**
  * ToDo(Christian): eventually give this a more general type,
  * e.g. `Pick<EventTarget, 'dispatchEvent'>` and therefor stay

@@ -17,9 +17,7 @@ import {
     first,
     Subscription,
 } from 'rxjs';
-import type { Provider } from './types';
-
-type Payload<T> = { transient: T, event?: Record<string, any> };
+import type { Provider, EventName, Payload, Listener } from './types';
 
 export class Client<T> {
     private readonly _outbound: Subject<Payload<T>>;
@@ -27,6 +25,7 @@ export class Client<T> {
     private readonly _events: Subject<Payload<T>>;
 
     private readonly _transient: Observable<T>;
+    private readonly _eventMap: Map<EventName, Listener[]> = new Map();
 
     constructor(
         public readonly namespace: string,
@@ -58,31 +57,29 @@ export class Client<T> {
     }
 
     /**
-     * broadcast events with other sandboxes
-     * @param eventName name of the event
-     * @param payload   event payload
-     */
-    public emit (eventName: string, payload: any) {
-        this._outbound.next({ event: { [eventName]: payload } } as any);
-    }
-
-    /**
      * event handler to act on changes to certain state properties
      * @param key state property
      * @param fn  handler to call once state of given property changes
      */
-    public listen(key: keyof T, fn: (...args: any[]) => void) {
+    public listen(eventName: keyof T, fn: Listener) {
         if (this._isBus) {
-            fn(this.defaultValue[key]);
+            fn(this.defaultValue[eventName]);
         }
 
-        this.events
-            .pipe(
-                pluck('transient'),
-                pluck(key),
-                filter((val) => val !== undefined)
-            )
-            .subscribe(fn);
+        return this.events.pipe(
+            pluck('transient'),
+            pluck(eventName),
+            filter((val) => val !== undefined)
+        ).subscribe(fn);
+    }
+
+    /**
+     * broadcast events with other sandboxes
+     * @param eventName name of the event
+     * @param payload   event payload
+     */
+    public emit (eventName: EventName, payload: any) {
+        this._outbound.next({ event: { [eventName as string]: payload } } as any);
     }
 
     /**
@@ -90,16 +87,8 @@ export class Client<T> {
      * @param eventName name of the event
      * @param fn        event handler
      */
-    public on(eventName: string, fn: (...args: any[]) => void) {
-        return this.events
-            .pipe(
-                pluck('event'),
-                filter(Boolean),
-                mergeMap((events) => from(Object.entries(events))),
-                filter(([k]) => k.toLowerCase().indexOf(eventName.toLowerCase()) >= 0),
-                map(([, v]) => v)
-            )
-            .subscribe(fn);
+    public on(eventName: EventName, fn: Listener) {
+        return this._registerEvent(eventName, fn);
     }
 
     /**
@@ -107,17 +96,8 @@ export class Client<T> {
      * @param eventName name of the event
      * @param fn        event handler
      */
-    public once(eventName: string, fn: (...args: any[]) => void) {
-        return this.events
-            .pipe(
-                pluck('event'),
-                filter(Boolean),
-                mergeMap((events) => from(Object.entries(events))),
-                filter(([k]) => k.toLowerCase().indexOf(eventName.toLowerCase()) >= 0),
-                map(([, v]) => v),
-                first()
-            )
-            .subscribe(fn);
+    public once(eventName: EventName, fn: Listener) {
+        return this._registerEvent(eventName, fn, true);
     }
 
     /**
@@ -126,6 +106,40 @@ export class Client<T> {
      */
     public off(subscription: Subscription) {
         subscription.unsubscribe();
+    }
+
+    /**
+     * Get a listing the events for which the emitter has listeners.
+     * The values in the array are strings or Symbols.
+     * @returns array of listings
+     */
+    public eventNames () {
+        return [...this._eventMap.keys()];
+    }
+
+    private _registerEvent(eventName: EventName, fn: Listener, isOnce = false) {
+        const events = this._eventMap.get(eventName) || ([] as Listener[]);
+        events.push(fn);
+        this._eventMap.set(eventName, events);
+
+        const index = typeof eventName === 'string'
+            ? eventName.toLocaleLowerCase()
+            : eventName.toString().toLowerCase();
+        return this.events
+            .pipe(
+                pluck('event'),
+                filter(Boolean),
+                mergeMap((events) => from(Object.entries(events))),
+                filter(([k]) => k.toLowerCase().indexOf(index) >= 0),
+                map(([, v]) => v),
+                (source) => {
+                    if (!isOnce) {
+                        return source;
+                    }
+                    return source.pipe(first());
+                }
+            )
+            .subscribe(fn);
     }
 
     private _register(): Observable<T> {
