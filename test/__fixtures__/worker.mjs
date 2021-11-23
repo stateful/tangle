@@ -4,4 +4,10 @@ import Channel from '../../src/worker_threads';
 const ch = new Channel(workerData.channel, {});
 const client = ch.attach();
 
-client.broadcast({ onCalc: workerData.add });
+if (workerData.add) {
+    client.broadcast({ someProp: workerData.add });
+}
+
+if (workerData.event) {
+    client.emit('onFoobar', workerData.event);
+}

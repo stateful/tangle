@@ -13,7 +13,7 @@ export default class IFrameChannel<T> extends BaseChannel<HTMLIFrameElement, T> 
 
     constructor (
         namespace: string,
-        defaultValue: T,
+        defaultValue: Required<T>,
         /**
          * for testing purposes
          */

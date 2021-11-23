@@ -7,8 +7,15 @@ import { test } from 'tap';
 import Channel from '../src/worker_threads';
 
 interface Payload {
-    onCalc?: number
+    someProp?: number
+    action?: { method: string, args: any[] }
 }
+const defaultValue = {
+    someProp: 5,
+    action: { method: 'noop', args: [] }
+};
+
+const EXPECTED_SUM = 15;
 
 // eslint-disable-next-line
 // @ts-ignore VSCode has problems detecting ESM here
@@ -20,21 +27,22 @@ const argv = [
 ];
 
 test('should allow communication between multiple worker threads', (t) => {
+    const namespace = 'test1';
     t.plan(1);
 
-    const ch = new Channel<Payload>('test1', {});
+    const ch = new Channel<Payload>(namespace, defaultValue);
     ch.register([
-        new Worker(workerPath, { argv, workerData: { channel: 'test1', add: 1 } }),
-        new Worker(workerPath, { argv, workerData: { channel: 'test1', add: 3 } }),
-        new Worker(workerPath, { argv, workerData: { channel: 'test1', add: 6 } })
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 1 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 3 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 6 } })
     ]).subscribe((bus) => {
         let result = 0;
 
-        bus.listen('onCalc', (sum: number) => {
+        bus.listen('someProp', (sum: number) => {
             result += sum;
 
-            if (result === 10) {
-                t.equal(result, 10);
+            if (result === EXPECTED_SUM) {
+                t.equal(result, EXPECTED_SUM);
                 ch.providers.map((p) => p.terminate());
                 t.end();
             }
@@ -43,18 +51,45 @@ test('should allow communication between multiple worker threads', (t) => {
 });
 
 test('should get bus by promise', async (t) => {
+    const namespace = 'test1';
     t.plan(1);
 
-    const ch = new Channel<Payload>('test2', {});
+    const ch = new Channel<Payload>(namespace, defaultValue);
     const bus = await ch.registerPromise([
-        new Worker(workerPath, { argv, workerData: { channel: 'test2', add: 1 } }),
-        new Worker(workerPath, { argv, workerData: { channel: 'test2', add: 3 } }),
-        new Worker(workerPath, { argv, workerData: { channel: 'test2', add: 6 } })
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 1 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 3 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 6 } })
     ]);
 
     let result = 0;
     await new Promise<void>((resolve) => {
-        bus.listen('onCalc', (sum: number) => {
+        bus.listen('someProp', (sum: number) => {
+            result += sum;
+            if (result === EXPECTED_SUM) {
+                resolve();
+            }
+        });
+    });
+
+
+    t.equal(result, EXPECTED_SUM);
+    ch.providers.map((p) => p.terminate());
+});
+
+test('should allow to send events', async (t) => {
+    const namespace = 'test3';
+    t.plan(1);
+
+    const ch = new Channel<Payload>(namespace, defaultValue);
+    const bus = await ch.registerPromise([
+        new Worker(workerPath, { argv, workerData: { channel: namespace, event: 1 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, event: 3 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, event: 6 } })
+    ]);
+
+    let result = 0;
+    await new Promise<void>((resolve) => {
+        bus.on('onFoobar', (sum: number) => {
             result += sum;
             if (result === 10) {
                 resolve();

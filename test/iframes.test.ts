@@ -3,9 +3,11 @@ import { test } from 'tap';
 
 import Channel from '../src/iframes';
 
-interface Payload {
-    onCalc?: number
+interface State {
+    someProp?: number
 }
+
+const defaultValue = { someProp: 8 };
 
 test('should allow communication between multiple worker threads', async (t) => {
     t.plan(1);
@@ -25,16 +27,16 @@ test('should allow communication between multiple worker threads', async (t) => 
     const frame = window.document.createElement('iframe');
     window.document.body.appendChild(frame);
 
-    const frameChannel = new Channel<Payload>('iframe', {}, window as any);
-    const iframeChannel = new Channel<Payload>('iframe', {}, frame.contentWindow as any);
+    const frameChannel = new Channel<State>('iframe', defaultValue, window as any);
+    const iframeChannel = new Channel<State>('iframe', defaultValue, frame.contentWindow as any);
 
     let result = 0;
     const bus = await frameChannel.registerPromise([frame]);
     const client = iframeChannel.attach();
 
-    bus.listen('onCalc', (sum: number) => (result += sum));
-    client.broadcast({ onCalc: 42 });
+    bus.listen('someProp', (sum: number) => (result += sum));
+    client.broadcast({ someProp: 42 });
 
     await new Promise((r) => setTimeout(r, 200));
-    t.equal(result, 42);
+    t.equal(result, 50);
 });
