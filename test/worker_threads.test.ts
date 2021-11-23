@@ -21,6 +21,7 @@ const EXPECTED_SUM = 15;
 // @ts-ignore VSCode has problems detecting ESM here
 const dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const workerPath = path.join(dirname, '__fixtures__', 'worker.mjs');
+const workerOncePath = path.join(dirname, '__fixtures__', 'worker.once.mjs');
 const argv = [
     '--loader=ts-node/esm',
     '--experimental-specifier-resolution=node'
@@ -99,5 +100,26 @@ test('should allow to send events', async (t) => {
 
 
     t.equal(result, 10);
+    ch.providers.map((p) => p.terminate());
+});
+
+test('should allow to listen once', async (t) => {
+    const namespace = 'test4';
+    t.plan(1);
+
+    const ch = new Channel<Payload>(namespace, defaultValue);
+    const bus = await ch.registerPromise([
+        new Worker(workerOncePath, { argv, workerData: { channel: namespace } }),
+    ]);
+
+    const result = await new Promise<number>((resolve) => {
+        bus.emit('add', 2);
+        bus.emit('add', 5);
+        bus.emit('add', 15);
+        bus.emit('getResult', {});
+        bus.on('result', resolve);
+    });
+
+    t.equal(result, 2);
     ch.providers.map((p) => p.terminate());
 });

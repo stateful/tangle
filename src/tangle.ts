@@ -16,6 +16,7 @@ import {
     startWith,
     withLatestFrom,
     throttleTime,
+    first,
 } from 'rxjs';
 import type { Provider } from './types';
 
@@ -98,6 +99,19 @@ export class Client<T> {
                 mergeMap((events) => from(Object.entries(events))),
                 filter(([k]) => k.toLowerCase().indexOf(eventName.toLowerCase()) >= 0),
                 map(([, v]) => v)
+            )
+            .subscribe(fn);
+    }
+
+    public once(eventName: string, fn: (...args: any[]) => void) {
+        this.events
+            .pipe(
+                pluck('event'),
+                filter(Boolean),
+                mergeMap((events) => from(Object.entries(events))),
+                filter(([k]) => k.toLowerCase().indexOf(eventName.toLowerCase()) >= 0),
+                map(([, v]) => v),
+                first()
             )
             .subscribe(fn);
     }
