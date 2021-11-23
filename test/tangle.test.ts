@@ -9,6 +9,13 @@ tap.test('has a transient getter', (t) => {
     t.end();
 });
 
+tap.test('allows to get state value', (t) => {
+    const state = { foo: 'bar' };
+    const bus = new Bus<object>("testing", state, []);
+    t.matchSnapshot(bus.state);
+    t.end();
+});
+
 tap.test('has a list if event names', (t) => {
     const noop = () => { /** */ };
     const bus = new Bus<object>("testing", {}, []);

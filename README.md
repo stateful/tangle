@@ -23,7 +23,7 @@ yarn add tangle
 
 # Usage
 
-This package allows to setup message buses in various of environments. Make sure you use the correct import based on your use case:
+This package allows to share a state or send events around various of environments. Make sure you use the correct import based on your use case:
 
 - to broadcast messages between various worker threads
     ```js
@@ -43,7 +43,27 @@ This package allows to setup message buses in various of environments. Make sure
     ```
 - more to come...
 
-## Usage with Node.js Worker Threads
+## State Management
+
+Using the methods `listen(eventName: keyof T, fn: Listener)` and `broadcast(state: T)` you can share the state of an object. `T` defines the interface of an object representing the state. When initiating a channel you need to pass in the initialization value of that state, e.g.:
+
+```ts
+import Channel from 'tangle/worker_threads';
+
+interface TodoList {
+    todos: string[]
+    dueDate: number
+}
+
+const ch = new Channel<TodoList>('foobar', {
+    todos: [],
+    dueDate: Date.now()
+});
+```
+
+Now you can use `listen` to get notified when the state of a certain property changes and `broadcast` to update one or multiple properties of that state.
+
+### Example: Usage with Node.js Worker Threads
 
 Within the parent thread, setup a message with a channel name and a default state:
 
@@ -51,7 +71,9 @@ Within the parent thread, setup a message with a channel name and a default stat
 import { Worker } from 'worker_threads';
 import Channel from 'tangle/worker_threads';
 
-const ch = new Channel('foobar', {});
+const ch = new Channel('foobar', {
+    counter: 0
+});
 
 /**
  * register message bus
@@ -67,7 +89,7 @@ const bus = await ch.registerPromise([
     new Worker('./worker.js', { workerData: 'worker #3' })
 ])
 
-bus.listen('onCustomEvent', ({ message }) => console.log(message))
+bus.listen('counter', (counter) => console.log(`Counter update: ${counter}`))
 ```
 
 Within the worker file you can attach to the message bus and share messages across all worker threads:
@@ -77,23 +99,38 @@ Within the worker file you can attach to the message bus and share messages acro
 import { workerData } from 'worker_threads';
 import Channel from 'tangle/worker_threads';
 
-const ch = new Channel('foobar', {});
+const ch = new Channel('foobar', {
+    counter: 0
+});
 const client = ch.attach();
 
-client.broadcast({ onCustomEvent: `Hello World from ${workerData} 👋 !` })
+if (workerData === 'worker #1') {
+    client.broadcast({ counter: client.state.counter + 1 })
+}
+if (workerData === 'worker #2') {
+    setTimeout(() => {
+        client.broadcast({ counter: client.state.counter + 1 })
+    }, 100)
+}
+if (workerData === 'worker #3') {
+    setTimeout(() => {
+        client.broadcast({ counter: client.state.counter + 1 })
+    }, 200)
+}
 ```
 
 Given there are 3 worker threads attached to the message bus, the program would print:
 
 ```
-Hello World from worker #2 👋 !
-Hello World from worker #1 👋 !
-Hello World from worker #3 👋 !
+Counter update: 0
+Counter update: 1
+Counter update: 2
+Counter update: 3
 ```
 
-__Note:__ the initialization of a worker process is asynchronous which is why events aren't send in order.
+__Note:__ if you listen to a state property _Tangle_ will immeditially emit the current value of that property.
 
-## Usage with VSCode Webviews
+### Example: Usage with VSCode Webviews
 
 When you initialize your extension and all your webviews and panels, create a message bus and attach all of them to it, e.g.:
 
@@ -127,7 +164,7 @@ class PanelViewProvider implements vscode.WebviewViewProvider, WebviewProvider {
 }
 
 export async function activate (context: vscode.ExtensionContext) {
-    const ch = new Channel('vscode_state', {});
+    const ch = new Channel('vscode_state', { ... });
     const bus = await ch.registerPromise([
         vscode.window.createWebviewPanel(...),
         vscode.window.createWebviewPanel(...),
@@ -145,7 +182,7 @@ const vscode = acquireVsCodeApi()
 const ch = new Channel('vscode_state', {});
 const client = ch.attach(vscode);
 
-client.broadcast({ onCustomEvent: 'Hello from webview 👋 !' });
+client.broadcast({ ... });
 ```
 
 You can find more examples for other environments in the [examples](./examples) folder.

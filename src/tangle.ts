@@ -47,6 +47,10 @@ export class Client<T> {
         return this._transient;
     }
 
+    public get state() {
+        return this._inbound.value.transient;
+    }
+
     /**
      * share state with other sandboxes
      * @param state to share with other sandboxes

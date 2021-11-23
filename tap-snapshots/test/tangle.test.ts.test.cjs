@@ -5,6 +5,12 @@
  * Make sure to inspect the output below.  Do not ignore changes!
  */
 'use strict'
+exports[`test/tangle.test.ts TAP allows to get state value > must match snapshot 1`] = `
+Object {
+  "foo": "bar",
+}
+`
+
 exports[`test/tangle.test.ts TAP has a list if event names > must match snapshot 1`] = `
 Array [
   "foo",
