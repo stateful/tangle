@@ -187,6 +187,62 @@ client.broadcast({ ... });
 
 You can find more examples for other environments in the [examples](./examples) folder.
 
+## Event Handling
+
+As oppose to managing state between JavaScript sandboxes you can use Tangle to just send around events among these environments. For this usecase, no default value for the state is necessary. The interface for event handling is the same as defined for the Node.js [EventEmitter](https://nodejs.org/api/events.html#class-eventemitter), e.g.:
+
+```js
+import { Worker } from 'worker_threads';
+import Channel from 'tangle/worker_threads';
+
+const ch = new Channel('foobar');
+const bus = await ch.registerPromise([
+    new Worker('./worker.js', { workerData: 'worker #1' }),
+    new Worker('./worker.js', { workerData: 'worker #2' }),
+    new Worker('./worker.js', { workerData: 'worker #3' })
+])
+
+/**
+ * listen to events using `on` or `once`
+ */
+bus.on('someEvent', (payload) => console.log(`New event: ${payload}`))
+```
+
+```js
+// in ./worker.js
+import { workerData } from 'worker_threads';
+import Channel from 'tangle/worker_threads';
+
+const ch = new Channel('foobar');
+const client = ch.attach();
+client.emit('someEvent', workerData)
+```
+
+Given there are 3 worker threads attached to the message bus, the program would print:
+
+```
+worker #2
+worker #1
+worker #3
+```
+
+### Typed Event Handling
+
+Similar with state management you can define types for events and their payloads, e.g.:
+
+```ts
+interface Events {
+    foo: string
+    bar: number
+}
+
+const ch = new Channel<Events>('foobar');
+const client = ch.attach();
+client.emit('foo', 'bar')
+client.emit('bar', true) // 🚨 fails with "Argument of type 'number' is not assignable to parameter of type 'boolean'.ts(2345)"
+client.emit('foobar', true) // 🚨 fails with "Argument of type '"foobar"' is not assignable to parameter of type 'keyof Events'.ts(2345)"
+```
+
 # Contribute
 
 You have an idea on how to improve the package, please send us a pull request! Have a look into our [contributing guidelines](CONTRIBUTING.md).
