@@ -3,9 +3,15 @@ Tangle [![Test Changes](https://github.com/stateful/tangle/actions/workflows/tes
 
 > JavaScript message bus implementation for various of different sandbox environments, e.g. [worker threads](https://nodejs.org/api/worker_threads.html), [web workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers), [iframes](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe), [Visual Studio Code Webviews](https://code.visualstudio.com/api/extension-guides/webview) etc.
 
-`tangle` allows to sync states between various components that live in different sandbox environments, e.g. worker threads or VSCode webviews. It simplifies the communication between these sandboxes drastically. The package was mainly developed to help share data between various of webviews within a VSCode extension.
+`tangle` allows to sync states between various components that live in different sandbox environments, e.g. iframes, webworkers, worker threads or VSCode webviews. It simplifies the communication between these sandboxes drastically. The package was mainly developed to help share data between various of webviews within a VSCode extension.
 
 ❗❗ __Note:__ This package is in active development and not quite ready for prime just yet. Use it with cautions! ❗❗
+
+# Demo
+
+The ToDo list can be easily shared between 4 different iFrames. You can find this demo in the [example directory](https://github.com/stateful/tangle/tree/main/examples/iframes).
+
+![Demo](https://raw.githubusercontent.com/stateful/tangle/main/.github/workflows/test.yaml?token=AAFSRSIXJGSY76IZ7L4NSULBU6VZQ)
 
 # Install
 
