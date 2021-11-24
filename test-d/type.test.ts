@@ -1,22 +1,32 @@
 import { expectType } from 'tsd';
 import { Observable } from 'rxjs';
 import { Bus, Payload as PkgPayload } from '../src/tangle';
+import IFrameChannel from '../src/iframes';
+import WorkerThreadChannel from '../src/worker_threads';
 
 type Payload = {
     foo: string
     bar: number
 };
+const defaultPayload = { foo: '', bar: 123 };
 
 const bus = new Bus<Payload>(
     'namespace',
+    [],
     {
         foo: '',
         bar: 123,
         // @ts-expect-error not part of state
         loo: true
-    },
-    []
+    }
 );
+
+new WorkerThreadChannel<Payload>('namespace');
+new WorkerThreadChannel<Payload>('namespace', defaultPayload);
+new IFrameChannel<Payload>('namespace');
+new IFrameChannel<Payload>('namespace', defaultPayload);
+// @ts-expect-error missing property
+new IFrameChannel<Payload>('namespace', { foo: '' });
 
 bus.listen('foo', (param) => {
     expectType<string>(param);

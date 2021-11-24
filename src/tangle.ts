@@ -28,8 +28,8 @@ export class Client<T> {
 
     constructor(
         public readonly namespace: string,
-        public readonly defaultValue: T,
         public readonly providers: Provider[],
+        public readonly defaultValue: T,
         private readonly _isBus: boolean = false
     ) {
         this._outbound = new Subject<Payload<T>>();
@@ -231,7 +231,7 @@ export class Client<T> {
                         return { transient: { ...transient, ...event.transient } };
                     }
 
-                    throw new Error(`Neither event nor state change was given`);
+                    throw new Error('Neither event nor state change was given');
                 }),
                 map((combo) => {
                     if (this._isBus) {
@@ -278,8 +278,8 @@ export class Client<T> {
 }
 
 export class Bus<T> extends Client<T> {
-    constructor(namespace: string, defaultValue: T, providers: Provider[]) {
-        super(namespace, defaultValue, providers, true);
+    constructor(namespace: string, providers: Provider[], defaultValue: T) {
+        super(namespace, providers, defaultValue, true);
     }
 }
 
