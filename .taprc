@@ -4,12 +4,13 @@ flow: false
 check-coverage: true
 coverage: true
 files: test/**/*.test.ts
-reporter: dump
+reporter: spec
 node-arg: [
     --loader=ts-node/esm,
     --experimental-specifier-resolution=node,
     --no-warnings
 ]
+no-timeout: true
 
 branches: 66
 lines: 83
