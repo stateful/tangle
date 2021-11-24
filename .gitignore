@@ -4,3 +4,4 @@ node_modules
 **/*.d.*
 **/*.map
 .nyc_output
+examples/iframes/package-lock.json

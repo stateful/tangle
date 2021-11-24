@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "scripts": {
+    "compile": "rollup -c ./rollup.js",
+    "launch": "http-server",
+    "prepublish": "npm run compile",
+    "start": "run-s compile launch"
+  },
+  "dependencies": {
+    "todomvc-app-css": "^2.0.1",
+    "todomvc-common": "^1.0.2"
+  },
+  "devDependencies": {
+    "http-server": "^14.0.0"
+  }
+}

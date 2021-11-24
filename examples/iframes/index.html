@@ -3,22 +3,27 @@
     <head>
         <title>Tangle iFrame Example</title>
         <script type="module">
-            import Channel from '/dist/iframes.js';
+            import Channel from '/dist/esm/iframes.js';
 
-            const ch = new Channel('iframe', {})
+            const ch = new Channel('todos-vanilla-es6', {
+                todos: []
+            })
 
             const bus = await ch.registerPromise([
                 ...document.querySelectorAll('iframe')
             ])
-
-            bus.listen('onCustomEvent', (msg) =>
-                console.log('Received from iframe:', msg));
         </script>
+        <style>
+            html, body, iframe {
+                margin: 0;
+                padding: 0;
+            }
+        </style>
     </head>
     <body>
-        <iframe src="/iFrameA.html" frameborder="0"></iframe>
-        <iframe src="/iFrameB.html" frameborder="0"></iframe>
-        <iframe src="/iFrameC.html" frameborder="0"></iframe>
-        <iframe src="/iFrameD.html" frameborder="0"></iframe>
+        <iframe src="/iframe.html?id=iFrame A" frameborder="0" width="49.7%" height="600px"></iframe>
+        <iframe src="/iframe.html?id=iFrame B" frameborder="0" width="49.7%" height="600px"></iframe>
+        <iframe src="/iframe.html?id=iFrame C" frameborder="0" width="49.7%" height="600px"></iframe>
+        <iframe src="/iframe.html?id=iFrame D" frameborder="0" width="49.7%" height="600px"></iframe>
     </body>
 </html>
