@@ -1,5 +1,5 @@
 import vscode from 'vscode';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 
 export interface Messenger {
     postMessage: (message: any) => void
@@ -9,6 +9,11 @@ export interface WebviewProvider {
     webview: Observable<vscode.Webview>;
     identifier: string;
 }
+
+export type EventName = string | symbol;
+export type Payload<T> = { transient: T, event?: Record<string, any> };
+export type Listener = (...args: any[]) => void;
+export type RegisteredEvent = { fn: Listener, obs: Subscription };
 
 /**
  * ToDo(Christian): eventually give this a more general type,

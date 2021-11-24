@@ -1,6 +1,6 @@
 import { URL } from 'url';
 import { Worker, isMainThread, workerData } from 'worker_threads';
-import Channel from '../dist/worker_threads.js';
+import Channel from '../dist/esm/worker_threads.js';
 
 const filename = new URL('', import.meta.url).pathname;
 

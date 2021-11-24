@@ -9,24 +9,22 @@ import {
     filter,
     map,
     mergeMap,
-    pairwise,
     pluck,
     scan,
     share,
-    startWith,
     withLatestFrom,
     throttleTime,
+    first,
 } from 'rxjs';
-import type { Provider } from './types';
-
-type Payload<T> = { transient: T, event?: Record<string, any> };
+import type { Provider, EventName, Payload, Listener, RegisteredEvent } from './types';
 
 export class Client<T> {
-    protected readonly _outbound: Subject<Payload<T>>;
-    protected readonly _inbound: BehaviorSubject<Payload<T>>;
-    protected readonly _events: Subject<Payload<T>>;
+    private readonly _outbound: Subject<Payload<T>>;
+    private readonly _inbound: BehaviorSubject<Payload<T>>;
+    private readonly _events: Subject<Payload<T>>;
 
-    protected readonly _transient: Observable<T>;
+    private readonly _transient: Observable<T>;
+    private readonly _eventMap: Map<EventName, RegisteredEvent[]> = new Map();
 
     constructor(
         public readonly namespace: string,
@@ -38,7 +36,7 @@ export class Client<T> {
         this._inbound = new BehaviorSubject<Payload<T>>({ transient: this.defaultValue });
         this._events = new Subject<Payload<T>>();
 
-        this._transient = this.register();
+        this._transient = this._register();
     }
 
     public get events() {
@@ -47,6 +45,10 @@ export class Client<T> {
 
     public get transient() {
         return this._transient;
+    }
+
+    public get state() {
+        return this._inbound.value.transient;
     }
 
     /**
@@ -58,31 +60,29 @@ export class Client<T> {
     }
 
     /**
-     * broadcast events with other sandboxes
-     * @param eventName name of the event
-     * @param payload   event payload
-     */
-    public emit (eventName: string, payload: any) {
-        this._outbound.next({ event: { [eventName]: payload } } as any);
-    }
-
-    /**
      * event handler to act on changes to certain state properties
      * @param key state property
      * @param fn  handler to call once state of given property changes
      */
-    public listen(key: keyof T, fn: (...args: any[]) => void) {
+    public listen(eventName: keyof T, fn: Listener) {
         if (this._isBus) {
-            fn(this.defaultValue[key]);
+            fn(this.defaultValue[eventName]);
         }
 
-        this.events
-            .pipe(
-                pluck('transient'),
-                pluck(key),
-                filter((val) => val !== undefined)
-            )
-            .subscribe(fn);
+        return this.events.pipe(
+            pluck('transient'),
+            pluck(eventName),
+            filter((val) => val !== undefined)
+        ).subscribe(fn);
+    }
+
+    /**
+     * broadcast events with other sandboxes
+     * @param eventName name of the event
+     * @param payload   event payload
+     */
+    public emit (eventName: EventName, payload: any) {
+        this._outbound.next({ event: { [eventName as string]: payload } } as any);
     }
 
     /**
@@ -90,19 +90,98 @@ export class Client<T> {
      * @param eventName name of the event
      * @param fn        event handler
      */
-    public on(eventName: string, fn: (...args: any[]) => void) {
-        this.events
+    public on(eventName: EventName, fn: Listener) {
+        return this._registerEvent(eventName, fn);
+    }
+
+    /**
+     * listen to a certain event shared within given namespace once
+     * @param eventName name of the event
+     * @param fn        event handler
+     */
+    public once(eventName: EventName, fn: Listener) {
+        return this._registerEvent(eventName, fn, true);
+    }
+
+    /**
+     * listen to a certain event shared within given namespace once
+     * @param subscription observable of event that should be unsubscribed
+     */
+    public off(eventName: EventName, listener: Listener) {
+        const events = this._eventMap.get(eventName) || ([] as RegisteredEvent[]);
+        events
+            .filter(({ fn }) => fn === listener)
+            .forEach(({ obs }) => obs.unsubscribe());
+        return this;
+    }
+
+    /**
+     * Get a listing the events for which the emitter has listeners.
+     * The values in the array are strings or Symbols.
+     * @returns `(string | symbol)[]`
+     */
+    public eventNames () {
+        return [...this._eventMap.keys()];
+    }
+
+    /**
+     * Returns the number of listeners listening to the event named eventName.
+     * @param eventName The name of the event being listened for
+     * @returns `integer`
+     */
+    public listenerCount (eventName: EventName) {
+        return this.listeners(eventName).length;
+    }
+
+    /**
+     * Returns a copy of the array of listeners for the event named eventName.
+     * @param eventName The name of the event being listened for
+     * @returns `Function[]`
+     */
+    public listeners (eventName: EventName) {
+        return (this._eventMap.get(eventName) || ([] as RegisteredEvent[]))
+            .map(({ fn }) => fn);
+    }
+
+    /**
+     * Removes all listeners, or those of the specified eventName.
+     */
+    public removeAllListeners () {
+        const registeredEvents = [...this._eventMap.values()];
+        for (const events of registeredEvents) {
+            events.forEach(({ obs }) => obs.unsubscribe());
+        }
+        return this;
+    }
+
+    private _registerEvent(eventName: EventName, fn: Listener, isOnce = false) {
+        const events = this._eventMap.get(eventName) || ([] as RegisteredEvent[]);
+        const index = typeof eventName === 'string'
+            ? eventName.toLocaleLowerCase()
+            : eventName.toString().toLowerCase();
+
+        const obs = this.events
             .pipe(
                 pluck('event'),
                 filter(Boolean),
                 mergeMap((events) => from(Object.entries(events))),
-                filter(([k]) => k.toLowerCase().indexOf(eventName.toLowerCase()) >= 0),
-                map(([, v]) => v)
+                filter(([k]) => k.toLowerCase().indexOf(index) >= 0),
+                map(([, v]) => v),
+                (source) => {
+                    if (!isOnce) {
+                        return source;
+                    }
+                    return source.pipe(first());
+                }
             )
             .subscribe(fn);
+
+        events.push({ fn, obs });
+        this._eventMap.set(eventName, events);
+        return obs;
     }
 
-    protected register(): Observable<T> {
+    private _register(): Observable<T> {
         const providers = from(this.providers);
         const inGrouped$ = this._inbound;
         const outGrouped$ = this._outbound;
@@ -112,10 +191,10 @@ export class Client<T> {
             outGrouped$.pipe(pluck('transient'))
         );
         const transient$ = merge(providers).pipe(
-            this.fromProviders(),
+            this._fromProviders(),
             mergeMap(() => {
                 return transientGrouped$.pipe(
-                    scan(this.fold, this.defaultValue),
+                    scan(this._fold, this.defaultValue),
                     throttleTime(20),
                     mergeMap((transient) => {
                         const namespaced: Record<string, any> = {};
@@ -126,7 +205,7 @@ export class Client<T> {
             }),
             bufferCount(this.providers.length),
             map((transients) => {
-                return transients.reduce(this.fold, this.defaultValue);
+                return transients.reduce(this._fold, this.defaultValue);
             }),
             share()
         );
@@ -172,7 +251,7 @@ export class Client<T> {
         return transient$;
     }
 
-    protected fromProviders() {
+    private _fromProviders() {
         return (source: Observable<Provider>) => {
             return source.pipe(
                 map((provider) => {
@@ -188,29 +267,12 @@ export class Client<T> {
         };
     }
 
-    protected dedupe() {
-        return (source: Observable<T>) => {
-            return source.pipe(
-                startWith(this.defaultValue),
-                pairwise(),
-                filter(([prev, curr]) => JSON.stringify(prev) !== JSON.stringify(curr)),
-                map(([, curr]) => curr)
-            );
-        };
-    }
-
-    protected fold(acc?: T, one?: T): T {
+    private _fold(acc?: T, one?: T): T {
         if (!acc || !one) {
             return acc || one as T;
         }
 
         return { ...acc, ...one };
-    }
-
-    protected fromEntries(accum: T, [k, v]: [string, any]) {
-        const r: any = { ...accum };
-        r[k] = v;
-        return r as T;
     }
 }
 

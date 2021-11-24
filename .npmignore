@@ -1,4 +1,5 @@
 node_modules
+tap-snapshots
 tests
 .github
 .eslintrc.json
