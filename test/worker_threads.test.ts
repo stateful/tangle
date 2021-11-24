@@ -32,7 +32,6 @@ const argv = [
 
 test('should allow communication between multiple worker threads', (t) => {
     const namespace = 'test1';
-    t.plan(1);
 
     const ch = new Channel<Payload>(namespace, defaultValue);
     ch.register([
@@ -56,7 +55,6 @@ test('should allow communication between multiple worker threads', (t) => {
 
 test('should get bus by promise', async (t) => {
     const namespace = 'test1';
-    t.plan(1);
 
     const ch = new Channel<Payload>(namespace, defaultValue);
     const bus = await ch.registerPromise([
@@ -78,11 +76,11 @@ test('should get bus by promise', async (t) => {
 
     t.equal(result, EXPECTED_SUM);
     ch.providers.map((p) => p.terminate());
+    t.end();
 });
 
 test('should allow to send events', async (t) => {
     const namespace = 'test3';
-    t.plan(1);
 
     const ch = new Channel<Payload>(namespace, defaultValue);
     const bus = await ch.registerPromise([
@@ -104,11 +102,11 @@ test('should allow to send events', async (t) => {
 
     t.equal(result, 10);
     ch.providers.map((p) => p.terminate());
+    t.end();
 });
 
 test('should allow to listen once', async (t) => {
     const namespace = 'test4';
-    t.plan(1);
 
     const ch = new Channel<Payload>(namespace, defaultValue);
     const bus = await ch.registerPromise([
@@ -124,11 +122,11 @@ test('should allow to listen once', async (t) => {
 
     t.equal(result, 2);
     ch.providers.map((p) => p.terminate());
+    t.end();
 });
 
 test('should allow to unsubscribe via off', async (t) => {
     const namespace = 'test5';
-    t.plan(1);
 
     const ch = new Channel<Payload>(namespace, defaultValue);
     const bus = await ch.registerPromise([
@@ -144,11 +142,11 @@ test('should allow to unsubscribe via off', async (t) => {
 
     t.equal(result, 7);
     ch.providers.map((p) => p.terminate());
+    t.end();
 });
 
 test('should allow to unsubscribe via unsubscribe', async (t) => {
     const namespace = 'test5';
-    t.plan(1);
 
     const ch = new Channel<Payload>(namespace, defaultValue);
     const bus = await ch.registerPromise([
@@ -164,11 +162,11 @@ test('should allow to unsubscribe via unsubscribe', async (t) => {
 
     t.equal(result, 7);
     ch.providers.map((p) => p.terminate());
+    t.end();
 });
 
 test('should allow to unsubscribe', async (t) => {
     const namespace = 'test6';
-    t.plan(1);
 
     const ch = new Channel<Payload>(namespace, defaultValue);
     const bus = await ch.registerPromise([
@@ -187,4 +185,5 @@ test('should allow to unsubscribe', async (t) => {
 
     t.equal(result, 6);
     ch.providers.map((p) => p.terminate());
+    t.end();
 });
