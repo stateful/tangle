@@ -21,6 +21,7 @@
     "@typescript-eslint/no-explicit-any": 0,
     "@typescript-eslint/no-unused-vars": 2,
     "curly": 2,
+    "quotes": [2, "single"],
     "eqeqeq": 2,
     "no-throw-literal": 2,
     "semi": 0

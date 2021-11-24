@@ -7,7 +7,7 @@ export default abstract class BaseChannel<U, T> {
 
     constructor (
         private _namespace: string,
-        private _defaultValue: Required<T>,
+        private _defaultValue?: Required<T>,
     ) {}
 
     public registerPromise (providers: U[]): Promise<Bus<T>> {
@@ -17,10 +17,10 @@ export default abstract class BaseChannel<U, T> {
     }
 
     protected _initiateBus (providers: Provider[]) {
-        return new Bus<T>(this._namespace, this._defaultValue, providers);
+        return new Bus<T>(this._namespace, providers, this._defaultValue || {} as T);
     }
 
     protected _initiateClient (provider: Provider) {
-        return new Client<T>(this._namespace, this._defaultValue, [provider]);
+        return new Client<T>(this._namespace, [provider], this._defaultValue || {} as T);
     }
 }

@@ -11,12 +11,12 @@ const defaultValue = { someProp: 8 };
 
 test('should allow communication between multiple worker threads', async (t) => {
     const resourceLoader = new ResourceLoader({
-        proxy: "http://127.0.0.1:8080",
+        proxy: 'http://127.0.0.1:8080',
         strictSSL: false
     });
     const virtualConsole = new VirtualConsole();
     virtualConsole.sendTo(console);
-    const dom = new JSDOM(``, {
+    const dom = new JSDOM('', {
         runScripts: 'outside-only',
         resources: resourceLoader,
         virtualConsole
