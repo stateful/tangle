@@ -127,14 +127,6 @@ test('should allow to listen once', async (t) => {
 });
 
 test('should allow to unsubscribe via off', async (t) => {
-    /**
-     * ToDo(Christian): make these work in CI
-     */
-    if (process.env.CI) {
-        t.pass('Fails in GH Action but passes locally');
-        return t.end();
-    }
-
     const namespace = 'test5';
     t.plan(1);
 
@@ -155,14 +147,6 @@ test('should allow to unsubscribe via off', async (t) => {
 });
 
 test('should allow to unsubscribe via unsubscribe', async (t) => {
-    /**
-     * ToDo(Christian): make these work in CI
-     */
-    if (process.env.CI) {
-        t.pass('Fails in GH Action but passes locally');
-        return t.end();
-    }
-
     const namespace = 'test5';
     t.plan(1);
 
