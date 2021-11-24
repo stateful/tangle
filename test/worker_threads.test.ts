@@ -41,8 +41,8 @@ test('should allow communication between multiple worker threads', (t) => {
     ]).subscribe((bus) => {
         let result = 0;
 
-        bus.listen('someProp', (sum: number) => {
-            result += sum;
+        bus.listen('someProp', (sum?: number) => {
+            result += sum || 0;
 
             if (result === EXPECTED_SUM) {
                 t.equal(result, EXPECTED_SUM);
@@ -65,8 +65,8 @@ test('should get bus by promise', async (t) => {
 
     let result = 0;
     await new Promise<void>((resolve) => {
-        bus.listen('someProp', (sum: number) => {
-            result += sum;
+        bus.listen('someProp', (sum?: number) => {
+            result += sum || 0;
             if (result === EXPECTED_SUM) {
                 resolve();
             }
@@ -82,7 +82,7 @@ test('should get bus by promise', async (t) => {
 test('should allow to send events', async (t) => {
     const namespace = 'test3';
 
-    const ch = new Channel<Payload>(namespace, defaultValue);
+    const ch = new Channel<{ onFoobar: number }>(namespace, { onFoobar: 0 });
     const bus = await ch.registerPromise([
         new Worker(workerPath, { argv, workerData: { channel: namespace, event: 1 } }),
         new Worker(workerPath, { argv, workerData: { channel: namespace, event: 3 } }),
@@ -108,7 +108,7 @@ test('should allow to send events', async (t) => {
 test('should allow to listen once', async (t) => {
     const namespace = 'test4';
 
-    const ch = new Channel<Payload>(namespace, defaultValue);
+    const ch = new Channel<any>(namespace, defaultValue);
     const bus = await ch.registerPromise([
         new Worker(workerOncePath, { argv, workerData: { channel: namespace } }),
     ]);
@@ -128,7 +128,7 @@ test('should allow to listen once', async (t) => {
 test('should allow to unsubscribe via off', async (t) => {
     const namespace = 'test5';
 
-    const ch = new Channel<Payload>(namespace, defaultValue);
+    const ch = new Channel<any>(namespace, defaultValue);
     const bus = await ch.registerPromise([
         new Worker(workerOffPath, { argv, workerData: { channel: namespace } }),
     ]);
@@ -148,7 +148,7 @@ test('should allow to unsubscribe via off', async (t) => {
 test('should allow to unsubscribe via unsubscribe', async (t) => {
     const namespace = 'test5';
 
-    const ch = new Channel<Payload>(namespace, defaultValue);
+    const ch = new Channel<any>(namespace, defaultValue);
     const bus = await ch.registerPromise([
         new Worker(workerUnsubscribePath, { argv, workerData: { channel: namespace } }),
     ]);
@@ -168,7 +168,7 @@ test('should allow to unsubscribe via unsubscribe', async (t) => {
 test('should allow to unsubscribe', async (t) => {
     const namespace = 'test6';
 
-    const ch = new Channel<Payload>(namespace, defaultValue);
+    const ch = new Channel<any>(namespace, defaultValue);
     const bus = await ch.registerPromise([
         new Worker(workerRemoveAllListenerPath, { argv, workerData: { channel: namespace } }),
     ]);

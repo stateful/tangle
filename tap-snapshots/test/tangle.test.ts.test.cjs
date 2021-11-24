@@ -7,7 +7,8 @@
 'use strict'
 exports[`test/tangle.test.ts TAP allows to get state value > must match snapshot 1`] = `
 Object {
-  "foo": "bar",
+  "bar": 0,
+  "foo": 0,
 }
 `
 

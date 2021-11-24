@@ -4,7 +4,7 @@ import { test } from 'tap';
 import Channel from '../src/iframes';
 
 interface State {
-    someProp?: number
+    someProp: number
 }
 
 const defaultValue = { someProp: 8 };

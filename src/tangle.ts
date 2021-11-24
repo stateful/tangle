@@ -16,7 +16,7 @@ import {
     throttleTime,
     first,
 } from 'rxjs';
-import type { Provider, EventName, Payload, Listener, RegisteredEvent } from './types';
+import type { Provider, Payload, Listener, RegisteredEvent } from './types';
 
 export class Client<T> {
     private readonly _outbound: Subject<Payload<T>>;
@@ -24,7 +24,7 @@ export class Client<T> {
     private readonly _events: Subject<Payload<T>>;
 
     private readonly _transient: Observable<T>;
-    private readonly _eventMap: Map<EventName, RegisteredEvent[]> = new Map();
+    private readonly _eventMap: Map<keyof T, RegisteredEvent<T>[]> = new Map();
 
     constructor(
         public readonly namespace: string,
@@ -64,7 +64,7 @@ export class Client<T> {
      * @param key state property
      * @param fn  handler to call once state of given property changes
      */
-    public listen(eventName: keyof T, fn: Listener) {
+    public listen <K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
         if (this._isBus) {
             fn(this.defaultValue[eventName]);
         }
@@ -81,7 +81,7 @@ export class Client<T> {
      * @param eventName name of the event
      * @param payload   event payload
      */
-    public emit (eventName: EventName, payload: any) {
+    public emit <K extends keyof T>(eventName: K, payload: T[K]) {
         this._outbound.next({ event: { [eventName as string]: payload } } as any);
     }
 
@@ -90,7 +90,7 @@ export class Client<T> {
      * @param eventName name of the event
      * @param fn        event handler
      */
-    public on(eventName: EventName, fn: Listener) {
+    public on <K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
         return this._registerEvent(eventName, fn);
     }
 
@@ -99,7 +99,7 @@ export class Client<T> {
      * @param eventName name of the event
      * @param fn        event handler
      */
-    public once(eventName: EventName, fn: Listener) {
+    public once <K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
         return this._registerEvent(eventName, fn, true);
     }
 
@@ -107,8 +107,8 @@ export class Client<T> {
      * listen to a certain event shared within given namespace once
      * @param subscription observable of event that should be unsubscribed
      */
-    public off(eventName: EventName, listener: Listener) {
-        const events = this._eventMap.get(eventName) || ([] as RegisteredEvent[]);
+    public off <K extends keyof T>(eventName: K, listener: Listener<T[K]>) {
+        const events = this._eventMap.get(eventName) || ([] as RegisteredEvent<T>[]);
         events
             .filter(({ fn }) => fn === listener)
             .forEach(({ obs }) => obs.unsubscribe());
@@ -129,7 +129,7 @@ export class Client<T> {
      * @param eventName The name of the event being listened for
      * @returns `integer`
      */
-    public listenerCount (eventName: EventName) {
+    public listenerCount <K extends keyof T>(eventName: K) {
         return this.listeners(eventName).length;
     }
 
@@ -138,8 +138,8 @@ export class Client<T> {
      * @param eventName The name of the event being listened for
      * @returns `Function[]`
      */
-    public listeners (eventName: EventName) {
-        return (this._eventMap.get(eventName) || ([] as RegisteredEvent[]))
+    public listeners <K extends keyof T>(eventName: K) {
+        return (this._eventMap.get(eventName) || ([] as RegisteredEvent<T>[]))
             .map(({ fn }) => fn);
     }
 
@@ -154,8 +154,8 @@ export class Client<T> {
         return this;
     }
 
-    private _registerEvent(eventName: EventName, fn: Listener, isOnce = false) {
-        const events = this._eventMap.get(eventName) || ([] as RegisteredEvent[]);
+    private _registerEvent <K extends keyof T>(eventName: K, fn: Listener<T[K]>, isOnce = false) {
+        const events = this._eventMap.get(eventName) || ([] as RegisteredEvent<T>[]);
         const index = typeof eventName === 'string'
             ? eventName.toLocaleLowerCase()
             : eventName.toString().toLowerCase();
@@ -176,6 +176,7 @@ export class Client<T> {
             )
             .subscribe(fn);
 
+        // @ts-expect-error ToDo(Christian): fix TS error here
         events.push({ fn, obs });
         this._eventMap.set(eventName, events);
         return obs;

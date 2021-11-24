@@ -10,10 +10,9 @@ export interface WebviewProvider {
     identifier: string;
 }
 
-export type EventName = string | symbol;
 export type Payload<T> = { transient: T, event?: Record<string, any> };
-export type Listener = (...args: any[]) => void;
-export type RegisteredEvent = { fn: Listener, obs: Subscription };
+export type Listener<T> = (value: T) => void;
+export type RegisteredEvent<T> = { fn: <K extends keyof T>(value: T[K]) => void, obs: Subscription };
 
 /**
  * ToDo(Christian): eventually give this a more general type,
