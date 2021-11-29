@@ -255,7 +255,7 @@ You have an idea on how to improve the package, please send us a pull request! H
 
 # Getting Help
 
-Running into issues or are you missing a specific usecase? Feel free to [file an issue](https://github.com/saucelabs/node-zap/issues/new).
+Running into issues or are you missing a specific usecase? Feel free to [file an issue](https://github.com/stateful/tangle/issues/new).
 
 ---
 
