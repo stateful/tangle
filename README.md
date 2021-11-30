@@ -11,7 +11,7 @@ Tangle [![Test Changes](https://github.com/stateful/tangle/actions/workflows/tes
 
 The ToDo list can be easily shared between 4 different iFrames. You can find this demo in the [example directory](https://github.com/stateful/tangle/tree/main/examples/iframes).
 
-![Demo](https://raw.githubusercontent.com/stateful/tangle/main/.github/workflows/test.yaml?token=AAFSRSIXJGSY76IZ7L4NSULBU6VZQ)
+![Demo iFrame](https://github.com/stateful/tangle/raw/main/.github/assets/iframe.gif)
 
 # Install
 
@@ -138,43 +138,64 @@ __Note:__ if you listen to a state property _Tangle_ will immeditially emit the 
 
 ### Example: Usage with VSCode Webviews
 
-When you initialize your extension and all your webviews and panels, create a message bus and attach all of them to it, e.g.:
+When you initialize your extension and all your webviews and panels, create a message bus and attach all of them to it. If done successfully you can share events and states between panels and webviews, e.g.:
+
+![Demo VSCode](https://github.com/stateful/tangle/raw/main/.github/assets/vscode.gif)
+
+If you define a `WebviewViewProvider` expose a property `webview` that is an observable of an `Webview`. This is necessary because the web view can be loaded at any point in time, e.g.:
 
 ```ts
-import vscode from "vscode";
+import {
+    WebviewViewProvider,
+    WebviewView,
+    Webview,
+    ExtensionContext,
+    window
+} from "vscode";
 import Channel from 'tangle/webviews';
-import type { WebviewProvider } from 'tangle';
 
-class PanelViewProvider implements vscode.WebviewViewProvider, WebviewProvider {
-    public view?: vscode.WebviewView;
-    private _webview = new Subject<vscode.Webview>();
+class PanelViewProvider implements WebviewViewProvider {
+    private _webview = new Subject<Webview>();
 
     constructor(
-        private readonly _context: vscode.ExtensionContext,
+        private readonly _context: ExtensionContext,
         public readonly identifier: string
     ) {}
 
-    resolveWebviewView(...) {
+    resolveWebviewView(webviewView: WebviewView) {
+        /**
+         * trigger channel initiation
+         */
+        this._webview.next(webviewView.webview)
+
         // ...
     }
 
-    public static register(context: vscode.ExtensionContext, identifier: string) {
+    public static register(context: ExtensionContext, identifier: string) {
         const panelProvider = new PanelViewProvider(context, identifier);
-        context.subscriptions.push(vscode.window.registerWebviewViewProvider(identifier, panelProvider));
+        context.subscriptions.push(window.registerWebviewViewProvider(identifier, panelProvider));
         return panelProvider;
     }
 
+    /**
+     * expose webview subject as observable to that the Tangle channel is
+     * initiated once the webview exists
+     */
     public get webview() {
         return this._webview.asObservable();
     }
 }
+```
 
+In or extension activation method we can then pass in the `Webview` directly, e.g. if created through `createWebviewPanel` or as observable.
+
+```ts
 export async function activate (context: vscode.ExtensionContext) {
     const ch = new Channel('vscode_state', { ... });
     const bus = await ch.registerPromise([
-        vscode.window.createWebviewPanel(...),
-        vscode.window.createWebviewPanel(...),
-        PanelViewProvider.register(context, 'panel1')
+        vscode.window.createWebviewPanel(...).webview,
+        vscode.window.createWebviewPanel(...).webview,
+        PanelViewProvider.register(context, 'panel1').webview
     ])
 }
 ```

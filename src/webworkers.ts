@@ -24,7 +24,6 @@ export default class WebWorkerChannel<T> extends BaseChannel<Worker, T> {
                 },
                 postMessage: (message) => {
                     p.postMessage(message);
-                    return Promise.resolve();
                 }
             }))),
             map(this._initiateBus.bind(this))

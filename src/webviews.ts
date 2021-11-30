@@ -1,48 +1,50 @@
-import vscode from 'vscode';
 import {
-    of,
+    merge,
     map,
     take,
-    merge,
     toArray,
+    Observable,
+    of
 } from 'rxjs';
+import type { Webview } from 'vscode';
 
-import type { Provider, WebviewProvider } from './types';
+import type { Provider } from './types';
 import BaseChannel from './channel';
 
 declare global {
     // eslint-disable-next-line
-    var acquireVsCodeApi: () => vscode.Webview;
+    var acquireVsCodeApi: () => Webview;
 }
 
-type ProviderType = WebviewProvider | vscode.WebviewPanel;
+/**
+ * In VSCode web views are created when opened by the extension
+ * therefor we don't always know when this instance is available.
+ * RxJS helps here to initiate the channel only once that happened.
+ */
+type WebviewProvider = Observable<Webview> | Webview;
 
-export default class WebViewChannel<T> extends BaseChannel<ProviderType, T> {
-    public providers: WebviewProvider[] = [];
+export default class WebViewChannel<T> extends BaseChannel<WebviewProvider, T> {
+    public providers: Observable<Webview>[] = [];
 
-    register (providers: ProviderType[]) {
-        const providerWithPanels = providers.map((provider) => {
-            const panel = provider as vscode.WebviewPanel;
-            return panel.viewType
-                ? <WebviewProvider>{ webview: of(panel.webview), identifier: panel.viewType }
-                : (provider as WebviewProvider);
+    register (providers: WebviewProvider[]) {
+        const observableProvider: Observable<Webview>[] = providers.map((p) => {
+            const panel = p as Webview;
+            return typeof panel.html === 'string' ? of(panel) : (p as Observable<Webview>);
         });
 
-        this.providers.push(...providerWithPanels);
-        return merge(...providerWithPanels.map((p) => p.webview)).pipe(
+        this.providers.push(...observableProvider);
+        return merge(...observableProvider).pipe(
             take(providers.length),
             toArray(),
-            map((ps: vscode.Webview[]) => ps.map((p) => (<Provider>{
+            map((ps: Webview[]) => ps.map((p) => (<Provider>{
                 onMessage: p.onDidReceiveMessage.bind(p),
-                postMessage: (message) => new Promise((resolve) => {
-                    p.postMessage(message).then(() => resolve());
-                }),
+                postMessage: p.postMessage.bind(p),
             }))),
             map(this._initiateBus.bind(this))
         );
     }
 
-    attach (webview: vscode.Webview) {
+    attach (webview: Webview) {
         return this._initiateClient(<Provider>{
             onMessage: (listener: EventListener) => {
                 window.addEventListener('message', (event) => listener(event.data));
