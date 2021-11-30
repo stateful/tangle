@@ -12,6 +12,10 @@ on:
           - patch
           - minor
           - major
+      additionalFlags:
+        description: "Additional flags for pre-releases, e.g. '--dry-run', '--preRelease=beta' or '--preRelease'"
+        required: false
+        type: string
 
 env:
   NPM_TOKEN: ${{secrets.NPM_TOKEN}}
@@ -63,7 +67,7 @@ jobs:
           name: compiled-package
           path: dist/
       - name: Release
-        run: npm run release:ci -- ${{github.event.inputs.releaseType}}
+        run: npm run release:ci -- ${{github.event.inputs.releaseType}} ${{github.event.inputs.additionalFlags}}
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
