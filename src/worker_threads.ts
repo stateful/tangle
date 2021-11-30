@@ -27,7 +27,6 @@ export default class WorkerThreadChannel<T> extends BaseChannel<Worker, T> {
                 },
                 postMessage: (message) => {
                     p.postMessage(message);
-                    return Promise.resolve();
                 }
             }))),
             map(this._initiateBus.bind(this))

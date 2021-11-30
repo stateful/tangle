@@ -1,13 +1,7 @@
-import vscode from 'vscode';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 export interface Messenger {
     postMessage: (message: any) => void
-}
-
-export interface WebviewProvider {
-    webview: Observable<vscode.Webview>;
-    identifier: string;
 }
 
 export type Payload<T> = { transient: T, event?: Record<string, any> };
@@ -25,7 +19,7 @@ export interface Provider {
      * ToDo(Christian): promise as return value might be required
      * for webviews but not for other environments
      */
-    postMessage: (message: any) => Promise<void>;
+    postMessage: (message: any) => void;
 }
 
 export interface Receiver {

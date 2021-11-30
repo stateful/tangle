@@ -36,7 +36,6 @@ export default class IFrameChannel<T> extends BaseChannel<HTMLIFrameElement, T> 
                         throw new Error('No content window found');
                     }
                     p.contentWindow.postMessage(message, '*');
-                    return Promise.resolve();
                 },
             }))),
             map(this._initiateBus.bind(this))
