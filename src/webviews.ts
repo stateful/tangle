@@ -7,14 +7,8 @@ import {
     of
 } from 'rxjs';
 import type { Webview } from 'vscode';
-
 import type { Provider } from './types';
 import BaseChannel from './channel';
-
-declare global {
-    // eslint-disable-next-line
-    var acquireVsCodeApi: () => Webview;
-}
 
 /**
  * In VSCode web views are created when opened by the extension
