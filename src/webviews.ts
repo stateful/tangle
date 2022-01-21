@@ -7,7 +7,6 @@ import {
     of
 } from 'rxjs';
 import type { Webview } from 'vscode';
-import type { WebviewApi } from 'vscode-webview';
 import type { Provider } from './types';
 import BaseChannel from './channel';
 
@@ -39,7 +38,7 @@ export default class WebViewChannel<T> extends BaseChannel<WebviewProvider, T> {
         );
     }
 
-    attach (webview: WebviewApi<T>) {
+    attach (webview: Webview) {
         return this._initiateClient(<Provider>{
             onMessage: (listener: EventListener) => {
                 window.addEventListener('message', (event) => listener(event.data));
