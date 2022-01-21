@@ -1,6 +1,6 @@
 {
   "name": "tangle",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "JavaScript state synchronization and event handling for various of different sandbox environments, e.g. worker threads, web workers, iframes, Visual Studio Code Webviews etc.",
   "author": "Sebastian Tiedtke <sebastian@stateful.com>",
   "license": "Apache-2.0",
