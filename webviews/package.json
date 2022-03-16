@@ -1,6 +1,6 @@
 {
   "name": "webviews",
-  "description": "AWS SDK V3 access for OneTable",
+  "description": "Subpackage for handling VSCode webviews with Tangle",
   "main": "../dist/cjs/webviews.js",
   "module": "../dist/esm/webviews.js",
   "types": "../dist/esm/webviews.d.ts"
