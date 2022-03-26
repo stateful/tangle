@@ -28,7 +28,7 @@ import type {
 } from './types';
 
 function trace(...args: any[]) {
-    // console.log(...args);
+    console.log(...args);
 }
 
 export class Client<T> {
@@ -72,7 +72,7 @@ export class Client<T> {
                     trace(`inbound ${this.id}`, ctx);
                 }),
                 share()
-            )
+            );
 
         // if (this._isBus) {
         //     this.context.subscribe(ctx => {
