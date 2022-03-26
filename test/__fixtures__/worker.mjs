@@ -1,5 +1,5 @@
-import { workerData } from 'worker_threads';
-import Channel from '../../src/worker_threads';
+import { workerData } from "worker_threads";
+import Channel from "../../src/worker_threads";
 
 const ch = new Channel(workerData.channel, {});
 const client = ch.attach();
@@ -9,5 +9,7 @@ if (workerData.add) {
 }
 
 if (workerData.event) {
-    client.emit('onFoobar', workerData.event);
+    client.emit("onFoobar", workerData.event);
 }
+
+// client.context.subscribe((ctx) => console.log(client.id, ctx.clients));

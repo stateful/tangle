@@ -31,6 +31,7 @@ test('should allow communication between multiple worker threads', async (t) => 
 
     let result = 0;
     const bus = await frameChannel.registerPromise([frame]);
+    // bus.transient.subscribe(console.log);
     const client = iframeChannel.attach();
 
     bus.listen('someProp', (sum: number) => (result += sum));

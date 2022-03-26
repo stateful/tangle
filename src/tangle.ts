@@ -15,10 +15,25 @@ import {
     withLatestFrom,
     throttleTime,
     first,
+    EMPTY,
+    startWith,
+    tap,
 } from 'rxjs';
-import type { Provider, Payload, Listener, RegisteredEvent } from './types';
+import type {
+    Context,
+    Provider,
+    Payload,
+    Listener,
+    RegisteredEvent,
+} from './types';
+
+function trace(...args: any[]) {
+    // console.log(...args);
+}
 
 export class Client<T> {
+    public readonly id: string = this._isBus ? 'bus' : Math.random().toString(36).substring(2);
+
     private readonly _outbound: Subject<Payload<T>>;
     private readonly _inbound: BehaviorSubject<Payload<T>>;
     private readonly _events: Subject<Payload<T>>;
@@ -26,15 +41,44 @@ export class Client<T> {
     private readonly _transient: Observable<T>;
     private readonly _eventMap: Map<keyof T, RegisteredEvent<T>[]> = new Map();
 
+    private _context: Context = { clients: new Map() };
+    public context: Observable<Context>;
+
     constructor(
         public readonly namespace: string,
         public readonly providers: Provider[],
         public readonly defaultValue: T,
         private readonly _isBus: boolean = false
     ) {
+        // bus keeps track of connections
+        this._context.clients.set(this.id, this._isBus);
+
         this._outbound = new Subject<Payload<T>>();
-        this._inbound = new BehaviorSubject<Payload<T>>({ transient: this.defaultValue });
+        this._inbound = new BehaviorSubject<Payload<T>>({
+            transient: this.defaultValue,
+            context: this._context,
+        });
         this._events = new Subject<Payload<T>>();
+
+        this.context = this._inbound
+            .pipe(
+                pluck('context'),
+                filter(Boolean),
+                scan((acc, curr) => ({
+                    clients: new Map([...acc.clients, ...curr.clients]),
+                }), this._context),
+                tap(ctx => {
+                    this._context = ctx;
+                    trace(`inbound ${this.id}`, ctx);
+                }),
+                share()
+            )
+
+        // if (this._isBus) {
+        //     this.context.subscribe(ctx => {
+        //         trace(this.id, ctx);
+        //     });
+        // }
 
         this._transient = this._register();
     }
@@ -51,12 +95,18 @@ export class Client<T> {
         return this._inbound.value.transient;
     }
 
+    public notify() {
+        this._context.clients.set(this.id, true);
+        // this.broadcast({} as T, this._context);
+        this._outbound.next({ context: this._context } as any);
+    }
+
     /**
      * share state with other sandboxes
      * @param state to share with other sandboxes
      */
-    public broadcast(state: T) {
-        this._outbound.next({ transient: state });
+    public broadcast(state: T, context = this._context) {
+        this._outbound.next({ transient: state, context });
     }
 
     /**
@@ -64,16 +114,18 @@ export class Client<T> {
      * @param key state property
      * @param fn  handler to call once state of given property changes
      */
-    public listen <K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
+    public listen<K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
         if (this._isBus) {
             fn(this.defaultValue[eventName]);
         }
 
-        return this.events.pipe(
-            pluck('transient'),
-            pluck(eventName),
-            filter((val) => val !== undefined)
-        ).subscribe(fn);
+        return this.events
+            .pipe(
+                pluck('transient'),
+                pluck(eventName),
+                filter((val) => val !== undefined)
+            )
+            .subscribe(fn);
     }
 
     /**
@@ -81,8 +133,10 @@ export class Client<T> {
      * @param eventName name of the event
      * @param payload   event payload
      */
-    public emit <K extends keyof T>(eventName: K, payload: T[K]) {
-        this._outbound.next({ event: { [eventName as string]: payload } } as any);
+    public emit<K extends keyof T>(eventName: K, payload: T[K]) {
+        this._outbound.next({
+            event: { [eventName as string]: payload },
+        } as any);
     }
 
     /**
@@ -90,7 +144,7 @@ export class Client<T> {
      * @param eventName name of the event
      * @param fn        event handler
      */
-    public on <K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
+    public on<K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
         return this._registerEvent(eventName, fn);
     }
 
@@ -99,7 +153,7 @@ export class Client<T> {
      * @param eventName name of the event
      * @param fn        event handler
      */
-    public once <K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
+    public once<K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
         return this._registerEvent(eventName, fn, true);
     }
 
@@ -107,8 +161,9 @@ export class Client<T> {
      * listen to a certain event shared within given namespace once
      * @param subscription observable of event that should be unsubscribed
      */
-    public off <K extends keyof T>(eventName: K, listener: Listener<T[K]>) {
-        const events = this._eventMap.get(eventName) || ([] as RegisteredEvent<T>[]);
+    public off<K extends keyof T>(eventName: K, listener: Listener<T[K]>) {
+        const events =
+            this._eventMap.get(eventName) || ([] as RegisteredEvent<T>[]);
         events
             .filter(({ fn }) => fn === listener)
             .forEach(({ obs }) => obs.unsubscribe());
@@ -120,7 +175,7 @@ export class Client<T> {
      * The values in the array are strings or Symbols.
      * @returns `(string | symbol)[]`
      */
-    public eventNames () {
+    public eventNames() {
         return [...this._eventMap.keys()];
     }
 
@@ -129,7 +184,7 @@ export class Client<T> {
      * @param eventName The name of the event being listened for
      * @returns `integer`
      */
-    public listenerCount <K extends keyof T>(eventName: K) {
+    public listenerCount<K extends keyof T>(eventName: K) {
         return this.listeners(eventName).length;
     }
 
@@ -138,15 +193,16 @@ export class Client<T> {
      * @param eventName The name of the event being listened for
      * @returns `Function[]`
      */
-    public listeners <K extends keyof T>(eventName: K) {
-        return (this._eventMap.get(eventName) || ([] as RegisteredEvent<T>[]))
-            .map(({ fn }) => fn);
+    public listeners<K extends keyof T>(eventName: K) {
+        return (
+            this._eventMap.get(eventName) || ([] as RegisteredEvent<T>[])
+        ).map(({ fn }) => fn);
     }
 
     /**
      * Removes all listeners, or those of the specified eventName.
      */
-    public removeAllListeners () {
+    public removeAllListeners() {
         const registeredEvents = [...this._eventMap.values()];
         for (const events of registeredEvents) {
             events.forEach(({ obs }) => obs.unsubscribe());
@@ -154,11 +210,17 @@ export class Client<T> {
         return this;
     }
 
-    private _registerEvent <K extends keyof T>(eventName: K, fn: Listener<T[K]>, isOnce = false) {
-        const events = this._eventMap.get(eventName) || ([] as RegisteredEvent<T>[]);
-        const index = typeof eventName === 'string'
-            ? eventName.toLocaleLowerCase()
-            : eventName.toString().toLowerCase();
+    private _registerEvent<K extends keyof T>(
+        eventName: K,
+        fn: Listener<T[K]>,
+        isOnce = false
+    ) {
+        const events =
+            this._eventMap.get(eventName) || ([] as RegisteredEvent<T>[]);
+        const index =
+            typeof eventName === 'string'
+                ? eventName.toLocaleLowerCase()
+                : eventName.toString().toLowerCase();
 
         const obs = this.events
             .pipe(
@@ -186,6 +248,15 @@ export class Client<T> {
         const providers = from(this.providers);
         const inGrouped$ = this._inbound;
         const outGrouped$ = this._outbound;
+
+        const outContext$ = this._outbound.pipe(
+            pluck('context'),
+            filter(Boolean),
+            startWith(this._context),
+            scan((acc, curr) => ({
+                clients: new Map([...acc.clients, ...curr.clients]),
+            }), this._context),
+        );
 
         const transientGrouped$ = merge(
             inGrouped$.pipe(pluck('transient')),
@@ -218,26 +289,35 @@ export class Client<T> {
                 }
             });
         }
-        const event$ = this._isBus ? merge(outGrouped$, inGrouped$) : outGrouped$;
+        const event$ = this._isBus
+            ? merge(outGrouped$, inGrouped$)
+            : outGrouped$;
         event$
             .pipe(
-                withLatestFrom(transient$),
-                map(([event, transient]) => {
+                withLatestFrom(transient$, outContext$),
+                map(([event, transient, outContext]) => {
                     if (event.event) {
-                        return { event: event.event };
+                        return { event: event.event, context: outContext };
                     }
 
                     if (event.transient) {
-                        return { transient: { ...transient, ...event.transient } };
+                        return {
+                            transient: { context: outContext, ...transient, ...event.transient, },
+                        };
                     }
 
-                    throw new Error('Neither event nor state change was given');
+                    // throw new Error('Neither event nor state change was given');
                 }),
                 map((combo) => {
+                    if (combo === undefined) {
+                        return EMPTY;
+                    }
+
                     if (this._isBus) {
                         this._events.next({
                             event: combo.event,
-                            transient: combo.transient || {} as T
+                            transient: combo.transient || ({} as T),
+                            context: combo.context!,
                         });
                     }
 
@@ -257,7 +337,10 @@ export class Client<T> {
             return source.pipe(
                 map((provider) => {
                     provider.onMessage((payload) => {
-                        const unpacked = (payload as any as Record<string, Payload<T>>)[this.namespace];
+                        // console.log(JSON.stringify(payload));
+                        const unpacked = (
+                            payload as any as Record<string, Payload<T>>
+                        )[this.namespace];
                         if (unpacked) {
                             this._inbound.next(unpacked);
                         }
@@ -270,7 +353,7 @@ export class Client<T> {
 
     private _fold(acc?: T, one?: T): T {
         if (!acc || !one) {
-            return acc || one as T;
+            return acc || (one as T);
         }
 
         return { ...acc, ...one };
