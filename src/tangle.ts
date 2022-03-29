@@ -64,7 +64,7 @@ export class Client<T> {
      * @param key state property
      * @param fn  handler to call once state of given property changes
      */
-    public listen <K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
+    public listen<K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
         if (this._isBus) {
             fn(this.defaultValue[eventName]);
         }
@@ -81,7 +81,7 @@ export class Client<T> {
      * @param eventName name of the event
      * @param payload   event payload
      */
-    public emit <K extends keyof T>(eventName: K, payload: T[K]) {
+    public emit<K extends keyof T>(eventName: K, payload: T[K]) {
         this._outbound.next({ event: { [eventName as string]: payload } } as any);
     }
 
@@ -90,7 +90,7 @@ export class Client<T> {
      * @param eventName name of the event
      * @param fn        event handler
      */
-    public on <K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
+    public on<K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
         return this._registerEvent(eventName, fn);
     }
 
@@ -99,7 +99,7 @@ export class Client<T> {
      * @param eventName name of the event
      * @param fn        event handler
      */
-    public once <K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
+    public once<K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
         return this._registerEvent(eventName, fn, true);
     }
 
@@ -107,7 +107,7 @@ export class Client<T> {
      * listen to a certain event shared within given namespace once
      * @param subscription observable of event that should be unsubscribed
      */
-    public off <K extends keyof T>(eventName: K, listener: Listener<T[K]>) {
+    public off<K extends keyof T>(eventName: K, listener: Listener<T[K]>) {
         const events = this._eventMap.get(eventName) || ([] as RegisteredEvent<T>[]);
         events
             .filter(({ fn }) => fn === listener)
@@ -120,7 +120,7 @@ export class Client<T> {
      * The values in the array are strings or Symbols.
      * @returns `(string | symbol)[]`
      */
-    public eventNames () {
+    public eventNames() {
         return [...this._eventMap.keys()];
     }
 
@@ -129,7 +129,7 @@ export class Client<T> {
      * @param eventName The name of the event being listened for
      * @returns `integer`
      */
-    public listenerCount <K extends keyof T>(eventName: K) {
+    public listenerCount<K extends keyof T>(eventName: K) {
         return this.listeners(eventName).length;
     }
 
@@ -138,7 +138,7 @@ export class Client<T> {
      * @param eventName The name of the event being listened for
      * @returns `Function[]`
      */
-    public listeners <K extends keyof T>(eventName: K) {
+    public listeners<K extends keyof T>(eventName: K) {
         return (this._eventMap.get(eventName) || ([] as RegisteredEvent<T>[]))
             .map(({ fn }) => fn);
     }
@@ -146,7 +146,7 @@ export class Client<T> {
     /**
      * Removes all listeners, or those of the specified eventName.
      */
-    public removeAllListeners () {
+    public removeAllListeners() {
         const registeredEvents = [...this._eventMap.values()];
         for (const events of registeredEvents) {
             events.forEach(({ obs }) => obs.unsubscribe());
@@ -154,7 +154,7 @@ export class Client<T> {
         return this;
     }
 
-    private _registerEvent <K extends keyof T>(eventName: K, fn: Listener<T[K]>, isOnce = false) {
+    private _registerEvent<K extends keyof T>(eventName: K, fn: Listener<T[K]>, isOnce = false) {
         const events = this._eventMap.get(eventName) || ([] as RegisteredEvent<T>[]);
         const index = typeof eventName === 'string'
             ? eventName.toLocaleLowerCase()

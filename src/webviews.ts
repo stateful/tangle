@@ -20,7 +20,7 @@ type WebviewProvider = Observable<Webview> | Webview;
 export default class WebViewChannel<T> extends BaseChannel<WebviewProvider, T> {
     public providers: Observable<Webview>[] = [];
 
-    register (providers: WebviewProvider[]) {
+    register(providers: WebviewProvider[]) {
         const observableProvider: Observable<Webview>[] = providers.map((p) => {
             const panel = p as Webview;
             return typeof panel.html === 'string' ? of(panel) : (p as Observable<Webview>);
@@ -38,7 +38,7 @@ export default class WebViewChannel<T> extends BaseChannel<WebviewProvider, T> {
         );
     }
 
-    attach (webview: Webview) {
+    attach(webview: Webview) {
         return this._initiateClient(<Provider>{
             onMessage: (listener: EventListener) => {
                 window.addEventListener('message', (event) => listener(event.data));
