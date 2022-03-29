@@ -13,7 +13,7 @@ import type { Bus, Client } from './tangle';
 export default class WebWorkerChannel<T> extends BaseChannel<Worker, T> {
     public providers: Worker[] = [];
 
-    register (providers: Worker[]): Observable<Bus<T>> {
+    register(providers: Worker[]): Observable<Bus<T>> {
         this.providers.push(...providers);
         return of(...providers).pipe(
             take(providers.length),
@@ -30,7 +30,7 @@ export default class WebWorkerChannel<T> extends BaseChannel<Worker, T> {
         );
     }
 
-    attach (): Client<T> {
+    attach(): Client<T> {
         return this._initiateClient(<Provider>{
             onMessage: (listener: EventListener) => {
                 addEventListener('message', (ev) => listener(ev.data));

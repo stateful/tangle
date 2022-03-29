@@ -16,7 +16,7 @@ import type { Bus, Client } from './tangle';
 export default class WorkerThreadChannel<T> extends BaseChannel<Worker, T> {
     public providers: Worker[] = [];
 
-    register (providers: Worker[]): Observable<Bus<T>> {
+    register(providers: Worker[]): Observable<Bus<T>> {
         this.providers.push(...providers);
         return of(...providers).pipe(
             take(providers.length),
@@ -33,7 +33,7 @@ export default class WorkerThreadChannel<T> extends BaseChannel<Worker, T> {
         );
     }
 
-    attach (): Client<T> {
+    attach(): Client<T> {
         if (!parentPort) {
             throw new Error('You can only attach to a message bus within a worker thread');
         }
