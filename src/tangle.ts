@@ -80,8 +80,8 @@ export class Client<T> {
             pluck('context'),
             filter(Boolean),
             scan((acc, curr) => {
-                if (typeof curr?.clients?.forEach === 'function') {
-                    curr?.clients?.forEach((function(value, key) {
+                if (curr && curr.clients && typeof curr.clients.forEach === 'function') {
+                    curr.clients.forEach((function(value, key) {
                         acc.clients.set(key, value);
                     }));
                 }
