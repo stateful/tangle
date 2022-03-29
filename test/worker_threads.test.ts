@@ -212,8 +212,8 @@ test('should wait until all parties have connected', async (t) => {
     });
     t.equal(result, EXPECTED_SUM);
 
-    const [ num ] = await Promise.all([ready, tally]);
-    t.equal(num, providers.length);
+    const [ context ] = await Promise.all([ready, tally]);
+    t.equal(context.clients.size, providers.length + 1); // +1 for bus
 
     ch.providers.map((p) => p.terminate());
     t.end();

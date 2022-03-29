@@ -99,10 +99,10 @@ export class Client<T> {
     /**
      * returns promise that fires when all sandboxes have connected
      */
-    public readyPromise(): Promise<number>{
+    public readyPromise(): Promise<Context>{
         return firstValueFrom(this.context.pipe(
             bufferCount(this.providers.length),
-            map(() => this.providers.length)
+            map(() => this._context)
         ));
     }
 
