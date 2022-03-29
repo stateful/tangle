@@ -5,6 +5,7 @@ import { Worker } from 'worker_threads';
 import { test } from 'tap';
 
 import Channel from '../src/worker_threads';
+import { bufferCount, firstValueFrom } from 'rxjs';
 
 interface Payload {
     someProp?: number
@@ -184,6 +185,33 @@ test('should allow to unsubscribe', async (t) => {
         (resolve) => bus.on('result', resolve));
 
     t.equal(result, 6);
+    ch.providers.map((p) => p.terminate());
+    t.end();
+});
+
+test('should wait until all parties have connected', async (t) => {
+    const namespace = 'test7';
+
+    const ch = new Channel<Payload>(namespace, defaultValue);
+    const providers = [
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 1 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 3 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 6 } })
+    ];
+    const bus = await ch.registerPromise(providers);
+    const p = firstValueFrom(bus.context.pipe(bufferCount(providers.length)));
+
+    let result = 0;
+    await Promise.all([new Promise<void>((resolve) => {
+        bus.listen('someProp', (sum?: number) => {
+            result += sum || 0;
+            if (result === EXPECTED_SUM) {
+                resolve();
+            }
+        });
+    }), p]);
+
+    t.equal(result, EXPECTED_SUM);
     ch.providers.map((p) => p.terminate());
     t.end();
 });

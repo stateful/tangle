@@ -21,6 +21,8 @@ export default abstract class BaseChannel<U, T> {
     }
 
     protected _initiateClient(provider: Provider) {
-        return new Client<T>(this._namespace, [provider], this._defaultValue || {} as T);
+        const client = new Client<T>(this._namespace, [provider], this._defaultValue || {} as T);
+        client.notify();
+        return client;
     }
 }
