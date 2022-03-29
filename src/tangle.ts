@@ -16,6 +16,7 @@ import {
     throttleTime,
     first,
     EMPTY,
+    firstValueFrom,
 } from 'rxjs';
 import type { Provider, Payload, Listener, RegisteredEvent, Context } from './types';
 
@@ -32,7 +33,7 @@ export class Client<T> {
     private readonly _transient: Observable<T>;
     private readonly _eventMap: Map<keyof T, RegisteredEvent<T>[]> = new Map();
 
-    public readonly _context: Context = { clients: new Map() };
+    private readonly _context: Context = { clients: new Map() };
 
     constructor(
         public readonly namespace: string,
@@ -78,9 +79,14 @@ export class Client<T> {
         const context$ = this._inbound.pipe(
             pluck('context'),
             filter(Boolean),
-            scan((acc, curr) => ({
-                clients: new Map([...acc.clients, ...curr.clients]),
-            }), this._context),
+            scan((acc, curr) => {
+                if (typeof curr?.clients?.forEach === 'function') {
+                    curr?.clients?.forEach((function(value, key) {
+                        acc.clients.set(key, value);
+                    }));
+                }
+                return acc;
+            }, this._context),
             share()
         );
         context$.subscribe(ctx => {
@@ -88,6 +94,16 @@ export class Client<T> {
         });
 
         return context$;
+    }
+
+    /**
+     * returns promise that fires when all sandboxes have connected
+     */
+    public readyPromise(): Promise<number>{
+        return firstValueFrom(this.context.pipe(
+            bufferCount(this.providers.length),
+            map(() => this.providers.length)
+        ));
     }
 
     /**

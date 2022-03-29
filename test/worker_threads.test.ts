@@ -5,7 +5,6 @@ import { Worker } from 'worker_threads';
 import { test } from 'tap';
 
 import Channel from '../src/worker_threads';
-import { bufferCount, firstValueFrom } from 'rxjs';
 
 interface Payload {
     someProp?: number
@@ -199,19 +198,23 @@ test('should wait until all parties have connected', async (t) => {
         new Worker(workerPath, { argv, workerData: { channel: namespace, add: 6 } })
     ];
     const bus = await ch.registerPromise(providers);
-    const p = firstValueFrom(bus.context.pipe(bufferCount(providers.length)));
+
+    const ready = bus.readyPromise();
 
     let result = 0;
-    await Promise.all([new Promise<void>((resolve) => {
+    const tally = await new Promise<void>((resolve) => {
         bus.listen('someProp', (sum?: number) => {
             result += sum || 0;
             if (result === EXPECTED_SUM) {
                 resolve();
             }
         });
-    }), p]);
-
+    });
     t.equal(result, EXPECTED_SUM);
+
+    const [ num ] = await Promise.all([ready, tally]);
+    t.equal(num, providers.length);
+
     ch.providers.map((p) => p.terminate());
     t.end();
 });
