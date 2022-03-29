@@ -1,6 +1,6 @@
 import { expectType } from 'tsd';
 import { Observable } from 'rxjs';
-import { Bus, Payload as PkgPayload } from '../src/tangle';
+import { Bus, Context, Payload as PkgPayload } from '../src/tangle';
 import IFrameChannel from '../src/iframes';
 import WorkerThreadChannel from '../src/worker_threads';
 
@@ -72,6 +72,10 @@ bus.off('bar', (param) => {
     expectType<number>(param);
 });
 
+bus.readyPromise().then((ctx) => {
+    expectType<Context>(ctx);
+});
+
 expectType<(keyof Payload)[]>(bus.eventNames());
 bus.listenerCount('foo');
 bus.listenerCount('bar');
@@ -82,4 +86,5 @@ bus.removeAllListeners();
 
 expectType<Observable<PkgPayload<Payload>>>(bus.events);
 expectType<Observable<Payload>>(bus.transient);
+expectType<Observable<Context>>(bus.context);
 expectType<Payload>(bus.state);
