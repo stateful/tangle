@@ -97,7 +97,7 @@ export class Client<T> {
     /**
      * returns promise that fires when all sandboxes have connected
      */
-    public readyPromise(): Promise<Context>{
+    public whenReady(): Promise<Context>{
         return firstValueFrom(this.context.pipe(
             bufferCount(this.providers.length),
             map(() => this._context)

@@ -72,7 +72,7 @@ bus.off('bar', (param) => {
     expectType<number>(param);
 });
 
-bus.readyPromise().then((ctx) => {
+bus.whenReady().then((ctx) => {
     expectType<Context>(ctx);
 });
 

@@ -199,7 +199,7 @@ test('should wait until all parties have connected', async (t) => {
     ];
     const bus = await ch.registerPromise(providers);
 
-    const ready = bus.readyPromise();
+    const ready = bus.whenReady();
 
     let result = 0;
     const tally = await new Promise<void>((resolve) => {
