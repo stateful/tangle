@@ -265,10 +265,7 @@ const ch = new Channel("foobar", {
     counter: 0,
 });
 
-/**
- * register message bus and broadcast when ready
- *
- */
+// register message bus and broadcast when ready
 const bus = await ch.registerPromise([
     // reuse worker.js above
     new Worker("./worker.js", { workerData: "worker #1" }),
