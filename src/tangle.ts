@@ -81,9 +81,7 @@ export class Client<T> {
             filter(Boolean),
             scan((acc, curr) => {
                 if (curr && curr.clients && typeof curr.clients.forEach === 'function') {
-                    curr.clients.forEach((function(value, key) {
-                        acc.clients.set(key, value);
-                    }));
+                    curr.clients.forEach(((value, key) => acc.clients.set(key, value)));
                 }
                 return acc;
             }, this._context),
