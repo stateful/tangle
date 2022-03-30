@@ -283,7 +283,6 @@ export class Client<T> {
                     if (event.transient) {
                         return { transient: { ...transient, ...event.transient } };
                     }
-                    // throw new Error('Neither event nor state change was given');
                 }),
                 map((combo) => {
                     if (combo === undefined) {
