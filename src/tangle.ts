@@ -80,7 +80,7 @@ export class Client<T> {
             pluck('context'),
             filter(Boolean),
             scan((acc, curr) => {
-                if (curr && curr.clients && typeof curr.clients.forEach === 'function') {
+                if (typeof curr?.clients?.forEach === 'function') {
                     curr.clients.forEach(((value, key) => acc.clients.set(key, value)));
                 }
                 return acc;
