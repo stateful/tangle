@@ -251,6 +251,35 @@ worker #1
 worker #3
 ```
 
+## Lifecycle Considerations & Hooks
+
+When clients attach to the channel hosted by the bus latency can be introduced by the time it takes sandbox environments (iframes, webworkers, worker threads or VSCode webviews) to create the runtime and load the scripts. This can create a problem if you are pushing state updates or events from the bus into the clients when completeness or order matters.
+
+`Bus` will provide a `whenReady(): Promise<Context>` method that resolves (promise) when **all clients** have connected and as a result are ready to receive messages. Alternatively, you can also subscribe to the RxJS Observable `Bus.context.subscribe(context => ...)` to get notified when clients connect.
+
+````js
+import { Worker } from "worker_threads";
+import Channel from "tangle/worker_threads";
+
+const ch = new Channel("foobar", {
+    counter: 0,
+});
+
+// register message bus and broadcast when ready
+const bus = await ch.registerPromise([
+    // reuse worker.js above
+    new Worker("./worker.js", { workerData: "worker #1" }),
+    new Worker("./worker.js", { workerData: "worker #2" }),
+    new Worker("./worker.js", { workerData: "worker #3" }),
+]);
+
+// set counter to 100 once all clients are ready
+bus.whenReady().then(() => {
+    bus.broadcast({ counter: 100 });
+});
+
+bus.listen("counter", (counter) => console.log(`Counter update: ${counter}`));
+````
 ### Typed Event Handling
 
 Similar with state management you can define types for events and their payloads, e.g.:

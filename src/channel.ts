@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { Provider } from './types';
 import { Client, Bus } from './tangle';
 
@@ -11,9 +11,7 @@ export default abstract class BaseChannel<U, T> {
     ) { }
 
     public registerPromise(providers: U[]): Promise<Bus<T>> {
-        return new Promise<Bus<T>>((resolve) => (
-            this.register(providers).subscribe(resolve)
-        ));
+        return firstValueFrom(this.register(providers));
     }
 
     protected _initiateBus(providers: Provider[]) {
@@ -21,6 +19,8 @@ export default abstract class BaseChannel<U, T> {
     }
 
     protected _initiateClient(provider: Provider) {
-        return new Client<T>(this._namespace, [provider], this._defaultValue || {} as T);
+        const client = new Client<T>(this._namespace, [provider], this._defaultValue || {} as T);
+        client.notify();
+        return client;
     }
 }

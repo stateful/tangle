@@ -15,16 +15,25 @@ import {
     withLatestFrom,
     throttleTime,
     first,
+    EMPTY,
+    firstValueFrom,
 } from 'rxjs';
-import type { Provider, Payload, Listener, RegisteredEvent } from './types';
+import type { Provider, Payload, Listener, RegisteredEvent, Context } from './types';
 
 export class Client<T> {
+    public readonly id: string = this._isBus ? 'bus' : Math.random().toString(36).substring(2);
+
+    public readonly context: Observable<Context>;
+
     private readonly _outbound: Subject<Payload<T>>;
     private readonly _inbound: BehaviorSubject<Payload<T>>;
     private readonly _events: Subject<Payload<T>>;
+    private readonly _notifer = new Subject<Context>();
 
     private readonly _transient: Observable<T>;
     private readonly _eventMap: Map<keyof T, RegisteredEvent<T>[]> = new Map();
+
+    private readonly _context: Context = { clients: new Map() };
 
     constructor(
         public readonly namespace: string,
@@ -33,8 +42,12 @@ export class Client<T> {
         private readonly _isBus: boolean = false
     ) {
         this._outbound = new Subject<Payload<T>>();
-        this._inbound = new BehaviorSubject<Payload<T>>({ transient: this.defaultValue });
+        this._inbound = new BehaviorSubject<Payload<T>>({ transient: this.defaultValue, context: this._context });
         this._events = new Subject<Payload<T>>();
+
+        // bus keeps track of connections
+        this._context.clients.set(this.id, this._isBus);
+        this.context = this._registerContext();
 
         this._transient = this._register();
     }
@@ -52,16 +65,56 @@ export class Client<T> {
     }
 
     /**
+     * notify bus of new sandbox
+     */
+    public notify() {
+        this._context.clients.set(this.id, true);
+        this._notifer.next(this._context);
+    }
+
+    /**
+     * collect and hold information about connected sandboxes
+     */
+    private _registerContext() : Observable<Context> {
+        const context$ = this._inbound.pipe(
+            pluck('context'),
+            filter(Boolean),
+            scan((acc, curr) => {
+                if (typeof curr?.clients?.forEach === 'function') {
+                    curr.clients.forEach(((value, key) => acc.clients.set(key, value)));
+                }
+                return acc;
+            }, this._context),
+            share()
+        );
+        context$.subscribe(ctx => {
+            this._context.clients = ctx.clients;
+        });
+
+        return context$;
+    }
+
+    /**
+     * returns promise that fires when all sandboxes have connected
+     */
+    public whenReady(): Promise<Context>{
+        return firstValueFrom(this.context.pipe(
+            bufferCount(this.providers.length),
+            map(() => this._context)
+        ));
+    }
+
+    /**
      * share state with other sandboxes
      * @param state to share with other sandboxes
      */
     public broadcast(state: T) {
-        this._outbound.next({ transient: state });
+        this._outbound.next({ transient: state, context: this._context });
     }
 
     /**
      * event handler to act on changes to certain state properties
-     * @param key state property
+     * @param eventName state property
      * @param fn  handler to call once state of given property changes
      */
     public listen<K extends keyof T>(eventName: K, fn: Listener<T[K]>) {
@@ -230,14 +283,17 @@ export class Client<T> {
                     if (event.transient) {
                         return { transient: { ...transient, ...event.transient } };
                     }
-
-                    throw new Error('Neither event nor state change was given');
                 }),
                 map((combo) => {
+                    if (combo === undefined) {
+                        return EMPTY;
+                    }
+
                     if (this._isBus) {
                         this._events.next({
                             event: combo.event,
-                            transient: combo.transient || {} as T
+                            transient: combo.transient || {} as T,
+                            context: this._context
                         });
                     }
 
@@ -247,6 +303,16 @@ export class Client<T> {
                 })
             )
             .subscribe();
+
+        if (!this._isBus) {
+            this._notifer.pipe(map(context => {
+                return { context } as any; // special payload
+            })).subscribe(payload => {
+                this.providers.forEach((provider) => {
+                    provider.postMessage({ [this.namespace]: payload });
+                });
+            });
+        }
 
         transient$.subscribe();
         return transient$;

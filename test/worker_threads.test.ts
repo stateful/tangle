@@ -187,3 +187,34 @@ test('should allow to unsubscribe', async (t) => {
     ch.providers.map((p) => p.terminate());
     t.end();
 });
+
+test('should wait until all parties have connected', async (t) => {
+    const namespace = 'test7';
+
+    const ch = new Channel<Payload>(namespace, defaultValue);
+    const providers = [
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 1 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 3 } }),
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 6 } })
+    ];
+    const bus = await ch.registerPromise(providers);
+
+    const ready = bus.whenReady();
+
+    let result = 0;
+    const tally = await new Promise<void>((resolve) => {
+        bus.listen('someProp', (sum?: number) => {
+            result += sum || 0;
+            if (result === EXPECTED_SUM) {
+                resolve();
+            }
+        });
+    });
+    t.equal(result, EXPECTED_SUM);
+
+    const [ context ] = await Promise.all([ready, tally]);
+    t.equal(context.clients.size, providers.length + 1); // +1 for bus
+
+    ch.providers.map((p) => p.terminate());
+    t.end();
+});
