@@ -81,7 +81,9 @@ export class Client<T> {
             filter(Boolean),
             scan((acc, curr) => {
                 if (typeof curr?.clients?.forEach === 'function') {
-                    curr.clients.forEach(((value, key) => acc.clients.set(key, value)));
+                    // deserialize json into es6 map
+                    const _curr: Context = { clients: new Map(curr.clients) };
+                    _curr.clients.forEach(((value, key) => acc.clients.set(key, value)));
                 }
                 return acc;
             }, this._context),
@@ -305,7 +307,9 @@ export class Client<T> {
             .subscribe();
 
         if (!this._isBus) {
-            this._notifer.pipe(map(context => {
+            this._notifer.pipe(map(_context => {
+                // es6 map is not json serializable
+                const context = { clients: Array.from(_context.clients.entries()) };
                 return { context } as any; // special payload
             })).subscribe(payload => {
                 this.providers.forEach((provider) => {
