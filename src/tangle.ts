@@ -80,8 +80,8 @@ export class Client<T> {
             pluck('context'),
             filter(Boolean),
             scan((acc, curr) => {
-                if (typeof curr?.clients?.forEach === 'function') {
-                    // deserialize json into es6 map
+                if (Array.isArray(curr?.clients)) {
+                    // deserialize array into es6 map
                     const _curr: Context = { clients: new Map(curr.clients) };
                     _curr.clients.forEach(((value, key) => acc.clients.set(key, value)));
                 }
