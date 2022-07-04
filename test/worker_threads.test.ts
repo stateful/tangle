@@ -2,7 +2,7 @@ import path from 'path';
 import url from 'url';
 import { Worker } from 'worker_threads';
 
-import { test } from 'tap';
+import { test, expect } from 'vitest';
 
 import Channel from '../src/worker_threads';
 
@@ -30,30 +30,32 @@ const argv = [
     '--experimental-specifier-resolution=node'
 ];
 
-test('should allow communication between multiple worker threads', (t) => {
+test('should allow communication between multiple worker threads', () => {
     const namespace = 'test1';
 
     const ch = new Channel<Payload>(namespace, defaultValue);
-    ch.register([
-        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 1 } }),
-        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 3 } }),
-        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 6 } })
-    ]).subscribe((bus) => {
-        let result = 0;
+    return new Promise<void>((resolve) => {
+        ch.register([
+            new Worker(workerPath, { argv, workerData: { channel: namespace, add: 1 } }),
+            new Worker(workerPath, { argv, workerData: { channel: namespace, add: 3 } }),
+            new Worker(workerPath, { argv, workerData: { channel: namespace, add: 6 } })
+        ]).subscribe((bus) => {
+            let result = 0;
 
-        bus.listen('someProp', (sum?: number) => {
-            result += sum || 0;
+            bus.listen('someProp', (sum?: number) => {
+                result += sum || 0;
 
-            if (result === EXPECTED_SUM) {
-                t.equal(result, EXPECTED_SUM);
-                ch.providers.map((p) => p.terminate());
-                t.end();
-            }
+                if (result === EXPECTED_SUM) {
+                    expect(result).toBe(EXPECTED_SUM);
+                    ch.providers.map((p) => p.terminate());
+                    resolve();
+                }
+            });
         });
     });
 });
 
-test('should get bus by promise', async (t) => {
+test('should get bus by promise', async () => {
     const namespace = 'test1';
 
     const ch = new Channel<Payload>(namespace, defaultValue);
@@ -74,12 +76,11 @@ test('should get bus by promise', async (t) => {
     });
 
 
-    t.equal(result, EXPECTED_SUM);
+    expect(result).toBe(EXPECTED_SUM);
     ch.providers.map((p) => p.terminate());
-    t.end();
 });
 
-test('should allow to send events', async (t) => {
+test('should allow to send events', async () => {
     const namespace = 'test3';
 
     const ch = new Channel<{ onFoobar: number }>(namespace, { onFoobar: 0 });
@@ -100,12 +101,11 @@ test('should allow to send events', async (t) => {
     });
 
 
-    t.equal(result, 10);
+    expect(result).toBe(10);
     ch.providers.map((p) => p.terminate());
-    t.end();
 });
 
-test('should allow to listen once', async (t) => {
+test('should allow to listen once', async () => {
     const namespace = 'test4';
 
     const ch = new Channel<any>(namespace);
@@ -120,12 +120,11 @@ test('should allow to listen once', async (t) => {
     const result = await new Promise<number>(
         (resolve) => bus.on('result', resolve));
 
-    t.equal(result, 2);
+    expect(result).toBe(2);
     ch.providers.map((p) => p.terminate());
-    t.end();
 });
 
-test('should allow to unsubscribe via off', async (t) => {
+test('should allow to unsubscribe via off', async () => {
     const namespace = 'test5';
 
     const ch = new Channel<any>(namespace);
@@ -140,12 +139,11 @@ test('should allow to unsubscribe via off', async (t) => {
     const result = await new Promise<number>(
         (resolve) => bus.on('result', resolve));
 
-    t.equal(result, 7);
+    expect(result).toBe(7);
     ch.providers.map((p) => p.terminate());
-    t.end();
 });
 
-test('should allow to unsubscribe via unsubscribe', async (t) => {
+test('should allow to unsubscribe via unsubscribe', async () => {
     const namespace = 'test5';
 
     const ch = new Channel<any>(namespace);
@@ -160,12 +158,11 @@ test('should allow to unsubscribe via unsubscribe', async (t) => {
     const result = await new Promise<number>(
         (resolve) => bus.on('result', resolve));
 
-    t.equal(result, 7);
+    expect(result).toBe(7);
     ch.providers.map((p) => p.terminate());
-    t.end();
 });
 
-test('should allow to unsubscribe', async (t) => {
+test('should allow to unsubscribe', async () => {
     const namespace = 'test6';
 
     const ch = new Channel<any>(namespace);
@@ -183,12 +180,11 @@ test('should allow to unsubscribe', async (t) => {
     const result = await new Promise<number>(
         (resolve) => bus.on('result', resolve));
 
-    t.equal(result, 6);
+    expect(result).toBe(6);
     ch.providers.map((p) => p.terminate());
-    t.end();
 });
 
-test('should wait until all parties have connected', async (t) => {
+test('should wait until all parties have connected', async () => {
     const namespace = 'test7';
 
     const ch = new Channel<Payload>(namespace, defaultValue);
@@ -210,11 +206,10 @@ test('should wait until all parties have connected', async (t) => {
             }
         });
     });
-    t.equal(result, EXPECTED_SUM);
+    expect(result).toBe(EXPECTED_SUM);
 
-    const [ context ] = await Promise.all([ready, tally]);
-    t.equal(context.clients.size, providers.length + 1); // +1 for bus
+    const [context] = await Promise.all([ready, tally]);
+    expect(context.clients.size).toBe(providers.length + 1); // +1 for bus
 
     ch.providers.map((p) => p.terminate());
-    t.end();
 });

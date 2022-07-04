@@ -1,5 +1,5 @@
 node_modules
-tap-snapshots
+coverage
 tests
 .github
 .eslintrc.json

@@ -1,5 +1,5 @@
 import { workerData } from 'worker_threads';
-import Channel from '../../src/worker_threads';
+import Channel from '../../dist/esm/worker_threads.js';
 
 const ch = new Channel(workerData.channel, {});
 const client = ch.attach();

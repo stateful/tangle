@@ -1,4 +1,4 @@
-import tap from 'tap';
+import { test, expect } from 'vitest';
 import { Observable } from 'rxjs';
 
 import { Bus } from '../src/tangle';
@@ -9,19 +9,17 @@ interface Payload {
     [key: number | symbol]: number
 }
 
-tap.test('has a transient getter', (t) => {
+test('has a transient getter', () => {
     const bus = new Bus<Payload>('testing', [], {} as Payload);
-    t.ok(bus.transient instanceof Observable);
-    t.end();
+    expect(bus.transient instanceof Observable).toBe(true);
 });
 
-tap.test('allows to get state value', (t) => {
+test('allows to get state value', () => {
     const bus = new Bus<Payload>('testing', [], { foo: 0, bar: 0 } as Payload);
-    t.matchSnapshot(bus.state);
-    t.end();
+    expect(bus.state).toMatchSnapshot();
 });
 
-tap.test('has a list if event names', (t) => {
+test('has a list if event names', () => {
     const noop = () => { /** */ };
     const bus = new Bus<Payload>('testing', [], {} as Payload);
     bus.on('foo', noop);
@@ -29,11 +27,10 @@ tap.test('has a list if event names', (t) => {
 
     const sym = Symbol('symbol');
     bus.on(sym, noop);
-    t.matchSnapshot(bus.eventNames());
-    t.end();
+    expect(bus.eventNames()).toMatchSnapshot();
 });
 
-tap.test('allows to get listener count', (t) => {
+test('allows to get listener count', () => {
     const noop = () => { /** */ };
     const bus = new Bus<Payload>('testing', [], {} as Payload);
     bus.on('foo', noop);
@@ -44,20 +41,18 @@ tap.test('allows to get listener count', (t) => {
     const sym = Symbol('symbol');
     bus.on(sym, noop);
     bus.on(sym, noop);
-    t.equal(bus.listenerCount('foo'), 3);
-    t.equal(bus.listenerCount('bar'), 1);
-    t.equal(bus.listenerCount(sym), 2);
+    expect(bus.listenerCount('foo')).toBe(3);
+    expect(bus.listenerCount('bar')).toBe(1);
+    expect(bus.listenerCount(sym)).toBe(2);
     // @ts-expect-error wrong key
-    t.equal(bus.listenerCount('foobar'), 0);
-    t.end();
+    expect(bus.listenerCount('foobar')).toBe(0);
 });
 
-tap.test('allows to get listeners of certain event', (t) => {
+test('allows to get listeners of certain event', () => {
     const noop = () => { /** */ };
     const bus = new Bus<Payload>('testing', [], {} as Payload);
     bus.on('foo', noop);
     const fn = bus.listeners('foo')[0];
 
-    t.equal(fn, noop);
-    t.end();
+    expect(fn).toEqual(noop);
 });

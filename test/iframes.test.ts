@@ -1,5 +1,5 @@
 import { JSDOM, ResourceLoader, VirtualConsole } from 'jsdom';
-import { test } from 'tap';
+import { test, expect } from 'vitest';
 
 import Channel from '../src/iframes';
 
@@ -9,7 +9,7 @@ interface State {
 
 const defaultValue = { someProp: 8 };
 
-test('should allow communication between multiple worker threads', async (t) => {
+test('should allow communication between multiple worker threads', async () => {
     const resourceLoader = new ResourceLoader({
         proxy: 'http://127.0.0.1:8080',
         strictSSL: false
@@ -37,6 +37,5 @@ test('should allow communication between multiple worker threads', async (t) => 
     client.broadcast({ someProp: 42 });
 
     await new Promise((r) => setTimeout(r, 200));
-    t.equal(result, 50);
-    t.end();
+    expect(result).toBe(50);
 });

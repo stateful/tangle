@@ -5,3 +5,4 @@ node_modules
 **/*.map
 .nyc_output
 examples/iframes/package-lock.json
+coverage

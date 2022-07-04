@@ -1,0 +1,16 @@
+// Vitest Snapshot v1
+
+exports[`allows to get state value 1`] = `
+{
+  "bar": 0,
+  "foo": 0,
+}
+`;
+
+exports[`has a list if event names 1`] = `
+[
+  "foo",
+  "bar",
+  Symbol(symbol),
+]
+`;
