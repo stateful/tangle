@@ -3,7 +3,7 @@ Tangle iFrames Example
 
 This little demo shows how to keep state and send events around multiple iframes. Here is an animation of it in action.
 
-![Demo](https://raw.githubusercontent.com/stateful/tangle/main/.github/workflows/test.yaml?token=AAFSRSIXJGSY76IZ7L4NSULBU6VZQ)
+![Demo](https://github.com/stateful/tangle/raw/a31645f78543ae81cddd086667b965c2795c0edf/.github/assets/iframe.gif)
 
 To run the demo, call:
 

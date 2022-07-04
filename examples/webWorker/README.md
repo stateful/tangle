@@ -10,7 +10,8 @@ yarn build
 Then start a static server in this directory:
 
 ```sh
-cd ./examples/iframes
+cd ./examples/webWorker
+ln -s ../../dist/esm/ ./dist
 npm i -g http-server
 http-server
 ```
