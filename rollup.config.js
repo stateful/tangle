@@ -17,7 +17,7 @@ export const createPackageJSON = (dir = 'esm', type = 'module') => ({
     )
 });
 
-export default {
+const esm = {
     input: [
         'src/tangle.ts',
         'src/worker_threads.ts',
@@ -46,3 +46,24 @@ export default {
         cleanup({ comments: 'none' })
     ],
 };
+
+const cjs = {
+    ...esm,
+    output: {
+        ...esm.output,
+        format: 'cjs',
+        dir: 'dist/cjs'
+    },
+    plugins: [
+        ...esm.plugins.slice(0, 2),
+        typescript({
+            tsconfig: './tsconfig.json',
+            outDir: 'dist/cjs',
+            declarationDir: './dist/cjs',
+        }),
+        createPackageJSON('cjs', 'commonjs'),
+        ...esm.plugins.slice(4)
+    ]
+};
+
+export default [ cjs, esm ];

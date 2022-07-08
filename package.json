@@ -53,9 +53,7 @@
   ],
   "scripts": {
     "build": "run-s compile",
-    "compile": "run-p compile:*",
-    "compile:esm": "rollup -c ./rollup.esm.js",
-    "compile:cjs": "rollup -c ./rollup.cjs.js",
+    "compile": "rollup -c ./rollup.config.js",
     "clean": "rm -r dist",
     "prepare": "husky install",
     "release": "release-it --github.release --verbose",
@@ -66,7 +64,8 @@
     "test": "run-s test:*",
     "test:lint": "eslint src test",
     "test:types": "tsd",
-    "test:unit": "vitest"
+    "test:unit": "vitest",
+    "watch": "npm run compile -- --watch"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.0.6",
