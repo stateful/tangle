@@ -307,4 +307,4 @@ Running into issues or are you missing a specific usecase? Feel free to [file an
 
 ---
 
-<p align="center"><small>Copyright 2021 © <a href="http://stateful.com/">Stateful</a> – Apache 2.0 License</small></p>
+<p align="center"><small>Copyright 2022 © <a href="http://stateful.com/">Stateful</a> – Apache 2.0 License</small></p>
