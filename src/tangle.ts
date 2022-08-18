@@ -17,6 +17,7 @@ import {
     first,
     EMPTY,
     firstValueFrom,
+    debounceTime,
 } from 'rxjs';
 import type { Provider, Payload, Listener, RegisteredEvent, Context } from './types';
 
@@ -50,6 +51,14 @@ export class Client<T> {
         this.context = this._registerContext();
 
         this._transient = this._register();
+
+        if (this._isBus) {
+            // broadcast previous state to newly connected clients
+            this.context.pipe(
+                debounceTime(100),
+                withLatestFrom(this.transient)
+            ).subscribe(([, previous]) => this.broadcast(previous || this.defaultValue));
+        }
     }
 
     public get events() {
@@ -68,6 +77,9 @@ export class Client<T> {
      * dispose will tear down event emitters & listeners
      */
     public dispose() {
+        this._events.complete();
+        this._notifer.complete();
+        this._outbound.complete();
         this._inbound.complete();
         this.removeAllListeners();
     }
@@ -83,7 +95,7 @@ export class Client<T> {
     /**
      * collect and hold information about connected sandboxes
      */
-    private _registerContext() : Observable<Context> {
+    private _registerContext(): Observable<Context> {
         const context$ = this._inbound.pipe(
             pluck('context'),
             filter(Boolean),
@@ -107,7 +119,7 @@ export class Client<T> {
     /**
      * returns promise that fires when all sandboxes have connected
      */
-    public whenReady(): Promise<Context>{
+    public whenReady(): Promise<Context> {
         return firstValueFrom(this.context.pipe(
             bufferCount(this.providers.length),
             map(() => this._context)
