@@ -26,7 +26,7 @@ export default class WebWorkerChannel<T> extends BaseChannel<Worker, T> {
                     p.postMessage(message);
                 }
             }))),
-            map(this._initiateBus.bind(this))
+            map(providers => this._initiateBus(providers))
         );
     }
 
