@@ -38,7 +38,7 @@ export default class IFrameChannel<T> extends BaseChannel<HTMLIFrameElement, T> 
                     p.contentWindow.postMessage(message, '*');
                 },
             }))),
-            map(this._initiateBus.bind(this))
+            map(providers => this._initiateBus(providers))
         );
     }
 
