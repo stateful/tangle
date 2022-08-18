@@ -52,6 +52,11 @@ export class Client<T> {
         this._transient = this._register();
     }
 
+    public dispose() {
+        this._inbound.complete();
+        this.removeAllListeners();
+    }
+
     public get events() {
         return this._events.asObservable().pipe(share());
     }
@@ -246,6 +251,7 @@ export class Client<T> {
             inGrouped$.pipe(pluck('transient')),
             outGrouped$.pipe(pluck('transient'))
         );
+
         const transient$ = merge(providers).pipe(
             this._fromProviders(),
             mergeMap(() => {
