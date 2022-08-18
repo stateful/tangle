@@ -52,11 +52,6 @@ export class Client<T> {
         this._transient = this._register();
     }
 
-    public dispose() {
-        this._inbound.complete();
-        this.removeAllListeners();
-    }
-
     public get events() {
         return this._events.asObservable().pipe(share());
     }
@@ -67,6 +62,14 @@ export class Client<T> {
 
     public get state() {
         return this._inbound.value.transient;
+    }
+
+    /**
+     * dispose will tear down event emitters & listeners
+     */
+    public dispose() {
+        this._inbound.complete();
+        this.removeAllListeners();
     }
 
     /**
