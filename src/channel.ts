@@ -14,8 +14,8 @@ export default abstract class BaseChannel<U, T> {
         return firstValueFrom(this.register(providers));
     }
 
-    protected _initiateBus(providers: Provider[]) {
-        return new Bus<T>(this._namespace, providers, this._defaultValue || {} as T);
+    protected _initiateBus(providers: Provider[], previousState?: T) {
+        return new Bus<T>(this._namespace, providers, previousState || this._defaultValue || {} as T);
     }
 
     protected _initiateClient(provider: Provider) {
