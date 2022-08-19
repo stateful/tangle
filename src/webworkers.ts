@@ -1,9 +1,5 @@
 import {
-    map,
     Observable,
-    of,
-    scan,
-    switchMap,
 } from 'rxjs';
 
 import BaseChannel from './channel';
@@ -11,40 +7,17 @@ import type { Provider } from './types';
 import type { Bus, Client } from './tangle';
 
 export default class WebWorkerChannel<T> extends BaseChannel<Worker, T> {
-    public providers: Worker[] = [];
-
-    register(providers: Worker[], dispose = true): Observable<Bus<T>> {
-        this.providers.push(...providers);
-        const providers$ = of(...providers).pipe(
-            map((p) => (<Provider>{
+    register(providers: Worker[], dispose?: boolean): Observable<Bus<T>>;
+    register(providers: Observable<Worker>[], dispose?: boolean): Observable<Bus<T>> ;
+    register(providers: any, dispose = true): Observable<Bus<T>> {
+        return this._register(providers, (p) => (<Provider>{
                 onMessage: (listener) => {
                     p.onmessage = (ev) => listener(ev.data);
                 },
                 postMessage: (message) => {
                     p.postMessage(message);
                 }
-            })),
-            scan((acc, one) => {
-                acc.push(one);
-                return acc;
-            }, <Provider[]>[])
-        );
-
-        return providers$.pipe(
-            this.debounceResolution(this.providers.length, 100),
-            switchMap(providers => {
-                return new Observable<Bus<T>>(observer => {
-                    const bus = this._initiateBus(providers, this._state);
-                    const s = bus.transient.subscribe(transient => this._state = transient);
-                    observer.next(bus);
-                    return () => {
-                        if (dispose === false) { return; }
-                        bus.dispose();
-                        s.unsubscribe();
-                    };
-                });
-            }),
-        );
+            }), dispose);
     }
 
     attach(): Client<T> {

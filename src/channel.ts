@@ -1,9 +1,23 @@
-import { debounce, firstValueFrom, timer, Observable } from 'rxjs';
+import {
+    debounce,
+    firstValueFrom,
+    from,
+    isObservable,
+    map,
+    merge,
+    Observable,
+    of,
+    scan,
+    switchMap,
+    tap,
+    timer,
+} from 'rxjs';
 import { Provider } from './types';
 import { Client, Bus } from './tangle';
 
 export default abstract class BaseChannel<U, T> {
-    public abstract register(providers: U[], dispose?: boolean): Observable<Bus<T>>;
+    public providers: U[] = [];
+    public abstract register(providers: U[] | Observable<U>[], dispose?: boolean): Observable<Bus<T>>;
     protected _state?: T;
 
     constructor(
@@ -21,8 +35,40 @@ export default abstract class BaseChannel<U, T> {
         }));
     }
 
-    public registerPromise(providers: U[]): Promise<Bus<T>> {
-        return firstValueFrom(this.register(providers, false));
+    public registerPromise(providers: U[] | Promise<U>[]): Promise<Bus<T>> {
+        const observableProviders: Observable<U>[] = providers.map((p) => {
+            return typeof (p as any).then === 'function' ? from(p as Promise<U>) : of(p as U);
+        });
+
+        return firstValueFrom(this.register(observableProviders, false));
+    }
+
+    protected _register(providers: U[] | Observable<U>[], providerMapper: { (p: U): Provider; }, dispose: boolean): Observable<Bus<T>> {
+        const observableProviders: Observable<U>[] = providers.map((p) => isObservable(p) ? (p as Observable<U>) : of(p as U));
+        const providers$ = merge(...observableProviders).pipe(
+            tap(p => this.providers.push(p)),
+            map(p => providerMapper(p)),
+            scan((acc, one) => {
+                acc.push(one);
+                return acc;
+            }, <Provider[]>[])
+        );
+
+        return providers$.pipe(
+            this.debounceResolution(this.providers.length, 100),
+            switchMap(providers => {
+                return new Observable<Bus<T>>(observer => {
+                    const bus = this._initiateBus(providers, this._state);
+                    const s = bus.transient.subscribe(transient => this._state = transient);
+                    observer.next(bus);
+                    return () => {
+                        if (dispose === false) { return; }
+                        bus.dispose();
+                        s.unsubscribe();
+                    };
+                });
+            }),
+        );
     }
 
     protected _initiateBus(providers: Provider[], previousState?: T) {
