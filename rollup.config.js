@@ -41,6 +41,7 @@ const esm = {
             tsconfig: './tsconfig.json',
             outDir: 'dist/esm',
             declarationDir: './dist/esm',
+            sourceMap: true,
         }),
         createPackageJSON(),
         cleanup({ comments: 'none' })
