@@ -1,9 +1,10 @@
 import {
-    of,
+    debounceTime,
     map,
-    take,
-    toArray,
     Observable,
+    of,
+    scan,
+    switchMap,
 } from 'rxjs';
 
 import BaseChannel from './channel';
@@ -13,20 +14,37 @@ import type { Bus, Client } from './tangle';
 export default class WebWorkerChannel<T> extends BaseChannel<Worker, T> {
     public providers: Worker[] = [];
 
-    register(providers: Worker[]): Observable<Bus<T>> {
+    register(providers: Worker[], dispose = true): Observable<Bus<T>> {
         this.providers.push(...providers);
-        return of(...providers).pipe(
-            take(providers.length),
-            toArray(),
-            map((ps) => ps.map((p) => (<Provider>{
+        const providers$ = of(...providers).pipe(
+            map((p) => (<Provider>{
                 onMessage: (listener) => {
                     p.onmessage = (ev) => listener(ev.data);
                 },
                 postMessage: (message) => {
                     p.postMessage(message);
                 }
-            }))),
-            map(providers => this._initiateBus(providers))
+            })),
+            scan((acc, one) => {
+                acc.push(one);
+                return acc;
+            }, <Provider[]>[])
+        );
+
+        return providers$.pipe(
+            debounceTime(50),
+            switchMap(providers => {
+                return new Observable<Bus<T>>(observer => {
+                    const bus = this._initiateBus(providers, this._state);
+                    const s = bus.transient.subscribe(transient => this._state = transient);
+                    observer.next(bus);
+                    return () => {
+                        if (dispose === false) { return; }
+                        bus.dispose();
+                        s.unsubscribe();
+                    };
+                });
+            }),
         );
     }
 
