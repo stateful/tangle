@@ -1,59 +1,23 @@
-import {
-    map,
-    merge,
-    Observable,
-    of,
-    scan,
-    switchMap,
-} from 'rxjs';
-import type { Webview } from 'vscode';
+import { Observable } from 'rxjs';
 import type { Provider } from './types';
 import BaseChannel from './channel';
 import { Bus } from './tangle';
+import { Webview } from 'vscode';
 
 /**
  * In VS Code web views are created when opened by the extension
  * therefor we don't always know when this instance is available.
  * RxJS helps here to initiate the channel only once that happened.
  */
-type WebviewProvider = Observable<Webview> | Webview;
 
-export default class WebViewChannel<T> extends BaseChannel<WebviewProvider, T> {
-    public providers: Observable<Webview>[] = [];
-
-    register(providers: WebviewProvider[], dispose = true) : Observable<Bus<T>> {
-        const observableProvider: Observable<Webview>[] = providers.map((p) => {
-            const panel = p as Webview;
-            return typeof panel.html === 'string' ? of(panel) : (p as Observable<Webview>);
-        });
-
-        this.providers.push(...observableProvider);
-        const providers$ = merge(...observableProvider).pipe(
-            map((p) => (<Provider>{
-                onMessage: p.onDidReceiveMessage.bind(p),
-                postMessage: p.postMessage.bind(p),
-            })),
-            scan((acc, one) => {
-                acc.push(one);
-                return acc;
-            }, <Provider[]>[])
-        );
-
-        return providers$.pipe(
-            this.debounceResolution(this.providers.length, 100),
-            switchMap(providers => {
-                return new Observable<Bus<T>>(observer => {
-                    const bus = this._initiateBus(providers, this._state);
-                    const s = bus.transient.subscribe(transient => this._state = transient);
-                    observer.next(bus);
-                    return () => {
-                        if (dispose === false) { return; }
-                        bus.dispose();
-                        s.unsubscribe();
-                    };
-                });
-            }),
-        );
+export default class WebViewChannel<T> extends BaseChannel<Webview, T> {
+    register(providers: Observable<Webview>[], dispose?: boolean): Observable<Bus<T>> ;
+    // register(providers: Webview[], dispose?: boolean): Observable<Bus<T>> ;
+    register(providers: any, dispose = true): Observable<Bus<T>> {
+        return this._register(providers, (p) => (<Provider>{
+            onMessage: p.onDidReceiveMessage.bind(p),
+            postMessage: p.postMessage.bind(p),
+        }), dispose);
     }
 
     // TODO: perhaps type union here? since technically DOM-based envs don't have Webview

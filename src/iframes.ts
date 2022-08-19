@@ -1,18 +1,10 @@
-import {
-    map,
-    Observable,
-    of,
-    scan,
-    switchMap,
-} from 'rxjs';
+import type { Observable } from 'rxjs';
 
 import type { Provider } from './types';
 import BaseChannel from './channel';
 import type { Bus } from './tangle';
 
 export default class IFrameChannel<T> extends BaseChannel<HTMLIFrameElement, T> {
-    public providers: HTMLIFrameElement[] = [];
-
     constructor(
         namespace: string,
         defaultValue?: Required<T>,
@@ -24,41 +16,20 @@ export default class IFrameChannel<T> extends BaseChannel<HTMLIFrameElement, T> 
         super(namespace, defaultValue);
     }
 
-    register(providers: HTMLIFrameElement[], dispose = true) : Observable<Bus<T>> {
-        this.providers.push(...providers);
-        const providers$ = of(...providers).pipe(
-            map((p) => (<Provider>{
-                onMessage: (listener) => {
-                    this._window.onmessage = (ev) => listener(ev.data);
-                },
-                postMessage: (message) => {
-                    if (!p.contentWindow) {
-                        throw new Error('No content window found');
-                    }
-                    p.contentWindow.postMessage(message, '*');
-                },
-            })),
-            scan((acc, one) => {
-                acc.push(one);
-                return acc;
-            }, <Provider[]>[])
-        );
-
-        return providers$.pipe(
-            this.debounceResolution(this.providers.length, 100),
-            switchMap(providers => {
-                return new Observable<Bus<T>>(observer => {
-                    const bus = this._initiateBus(providers, this._state);
-                    const s = bus.transient.subscribe(transient => this._state = transient);
-                    observer.next(bus);
-                    return () => {
-                        if (dispose === false) { return; }
-                        bus.dispose();
-                        s.unsubscribe();
-                    };
-                });
-            }),
-        );
+    register(providers: HTMLIFrameElement[], dispose?: boolean): Observable<Bus<T>>;
+    register(providers: Observable<HTMLIFrameElement>[], dispose?: boolean): Observable<Bus<T>>;
+    register(providers: any, dispose = true): Observable<Bus<T>> {
+        return this._register(providers, (p) => (<Provider>{
+            onMessage: (listener) => {
+                this._window.onmessage = (ev) => listener(ev.data);
+            },
+            postMessage: (message) => {
+                if (!p.contentWindow) {
+                    throw new Error('No content window found');
+                }
+                p.contentWindow.postMessage(message, '*');
+            },
+        }), dispose);
     }
 
     attach() {
