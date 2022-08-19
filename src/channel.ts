@@ -3,7 +3,7 @@ import { Provider } from './types';
 import { Client, Bus } from './tangle';
 
 export default abstract class BaseChannel<U, T> {
-    public abstract register(providers: U[]): Observable<Bus<T>>;
+    public abstract register(providers: U[], dispose?: boolean): Observable<Bus<T>>;
 
     constructor(
         private _namespace: string,
@@ -11,7 +11,7 @@ export default abstract class BaseChannel<U, T> {
     ) { }
 
     public registerPromise(providers: U[]): Promise<Bus<T>> {
-        return firstValueFrom(this.register(providers));
+        return firstValueFrom(this.register(providers, false));
     }
 
     protected _initiateBus(providers: Provider[], previousState?: T) {
