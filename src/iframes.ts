@@ -1,12 +1,15 @@
 import {
-    of,
+    debounceTime,
     map,
-    take,
-    toArray,
+    Observable,
+    of,
+    scan,
+    switchMap,
 } from 'rxjs';
 
 import type { Provider } from './types';
 import BaseChannel from './channel';
+import type { Bus } from './tangle';
 
 export default class IFrameChannel<T> extends BaseChannel<HTMLIFrameElement, T> {
     public providers: HTMLIFrameElement[] = [];
@@ -22,12 +25,10 @@ export default class IFrameChannel<T> extends BaseChannel<HTMLIFrameElement, T> 
         super(namespace, defaultValue);
     }
 
-    register(providers: HTMLIFrameElement[]) {
+    register(providers: HTMLIFrameElement[], dispose = true) : Observable<Bus<T>> {
         this.providers.push(...providers);
-        return of(...providers).pipe(
-            take(providers.length),
-            toArray(),
-            map((ps: HTMLIFrameElement[]) => ps.map((p) => (<Provider>{
+        const providers$ = of(...providers).pipe(
+            map((p) => (<Provider>{
                 onMessage: (listener) => {
                     this._window.onmessage = (ev) => listener(ev.data);
                 },
@@ -37,8 +38,27 @@ export default class IFrameChannel<T> extends BaseChannel<HTMLIFrameElement, T> 
                     }
                     p.contentWindow.postMessage(message, '*');
                 },
-            }))),
-            map(providers => this._initiateBus(providers))
+            })),
+            scan((acc, one) => {
+                acc.push(one);
+                return acc;
+            }, <Provider[]>[])
+        );
+
+        return providers$.pipe(
+            debounceTime(50),
+            switchMap(providers => {
+                return new Observable<Bus<T>>(observer => {
+                    const bus = this._initiateBus(providers, this._state);
+                    const s = bus.transient.subscribe(transient => this._state = transient);
+                    observer.next(bus);
+                    return () => {
+                        if (dispose === false) { return; }
+                        bus.dispose();
+                        s.unsubscribe();
+                    };
+                });
+            }),
         );
     }
 

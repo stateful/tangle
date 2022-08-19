@@ -4,6 +4,7 @@ import { Client, Bus } from './tangle';
 
 export default abstract class BaseChannel<U, T> {
     public abstract register(providers: U[], dispose?: boolean): Observable<Bus<T>>;
+    protected _state?: T;
 
     constructor(
         private _namespace: string,

@@ -1,12 +1,11 @@
 import {
-    merge,
+    debounceTime,
     map,
+    merge,
     Observable,
     of,
     scan,
-    tap,
-    debounceTime,
-    switchMap
+    switchMap,
 } from 'rxjs';
 import type { Webview } from 'vscode';
 import type { Provider } from './types';
@@ -22,9 +21,8 @@ type WebviewProvider = Observable<Webview> | Webview;
 
 export default class WebViewChannel<T> extends BaseChannel<WebviewProvider, T> {
     public providers: Observable<Webview>[] = [];
-    private _state?: T;
 
-    register(providers: WebviewProvider[]) {
+    register(providers: WebviewProvider[], dispose = true) : Observable<Bus<T>> {
         const observableProvider: Observable<Webview>[] = providers.map((p) => {
             const panel = p as Webview;
             return typeof panel.html === 'string' ? of(panel) : (p as Observable<Webview>);
@@ -39,27 +37,24 @@ export default class WebViewChannel<T> extends BaseChannel<WebviewProvider, T> {
             scan((acc, one) => {
                 acc.push(one);
                 return acc;
-            }, <Provider[]>[]));
+            }, <Provider[]>[])
+        );
 
-        const bus$ = providers$.pipe(
+        return providers$.pipe(
             debounceTime(50),
-            tap(providers => {
-                console.log(`Emit bus with ${providers.length} providers`);
-            }),
             switchMap(providers => {
                 return new Observable<Bus<T>>(observer => {
                     const bus = this._initiateBus(providers, this._state);
                     const s = bus.transient.subscribe(transient => this._state = transient);
                     observer.next(bus);
                     return () => {
+                        if (dispose === false) { return; }
                         bus.dispose();
                         s.unsubscribe();
                     };
                 });
             }),
         );
-
-        return bus$;
     }
 
     // TODO: perhaps type union here? since technically DOM-based envs don't have Webview
