@@ -4,7 +4,6 @@ import {
     scan,
     switchMap,
     Observable,
-    debounceTime,
 } from 'rxjs';
 import { parentPort } from 'worker_threads';
 import type { Worker } from 'worker_threads';
@@ -35,7 +34,7 @@ export default class WorkerThreadChannel<T> extends BaseChannel<Worker, T> {
         );
 
         return providers$.pipe(
-            debounceTime(50),
+            this.debounceResolution(this.providers.length, 100),
             switchMap(providers => {
                 return new Observable<Bus<T>>(observer => {
                     const bus = this._initiateBus(providers, this._state);

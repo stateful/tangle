@@ -1,4 +1,4 @@
-import { firstValueFrom, Observable } from 'rxjs';
+import { debounce, firstValueFrom, timer, Observable } from 'rxjs';
 import { Provider } from './types';
 import { Client, Bus } from './tangle';
 
@@ -10,6 +10,16 @@ export default abstract class BaseChannel<U, T> {
         private _namespace: string,
         private _defaultValue?: Required<T>,
     ) { }
+
+    /**
+     * operator to debounce providers when either the count or timeout is reached first
+     */
+    protected debounceResolution(count: number, timeout: number) {
+        return (source: Observable<Provider[]>) => source.pipe(debounce(ps => {
+            const t = ps.length === count ? 0 : timeout;
+            return timer(t);
+        }));
+    }
 
     public registerPromise(providers: U[]): Promise<Bus<T>> {
         return firstValueFrom(this.register(providers, false));
