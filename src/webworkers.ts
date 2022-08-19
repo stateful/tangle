@@ -1,5 +1,4 @@
 import {
-    debounceTime,
     map,
     Observable,
     of,
@@ -32,7 +31,7 @@ export default class WebWorkerChannel<T> extends BaseChannel<Worker, T> {
         );
 
         return providers$.pipe(
-            debounceTime(50),
+            this.debounceResolution(this.providers.length, 100),
             switchMap(providers => {
                 return new Observable<Bus<T>>(observer => {
                     const bus = this._initiateBus(providers, this._state);
