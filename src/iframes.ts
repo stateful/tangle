@@ -16,9 +16,9 @@ export default class IFrameChannel<T> extends BaseChannel<HTMLIFrameElement, T> 
         super(namespace, defaultValue);
     }
 
-    register(providers: HTMLIFrameElement[], dispose?: boolean): Observable<Bus<T>>;
-    register(providers: Observable<HTMLIFrameElement>[], dispose?: boolean): Observable<Bus<T>>;
-    register(providers: any, dispose = true): Observable<Bus<T>> {
+    register(providers: HTMLIFrameElement[]): Observable<Bus<T>>;
+    register(providers: Observable<HTMLIFrameElement>[]): Observable<Bus<T>>;
+    register(providers: any): Observable<Bus<T>> {
         return this._register(providers, (p) => (<Provider>{
             onMessage: (listener) => {
                 this._window.onmessage = (ev) => listener(ev.data);
@@ -29,7 +29,7 @@ export default class IFrameChannel<T> extends BaseChannel<HTMLIFrameElement, T> 
                 }
                 p.contentWindow.postMessage(message, '*');
             },
-        }), dispose);
+        }));
     }
 
     attach() {

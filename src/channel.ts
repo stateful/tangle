@@ -1,6 +1,5 @@
 import {
     debounce,
-    firstValueFrom,
     from,
     isObservable,
     map,
@@ -17,7 +16,7 @@ import { Client, Bus } from './tangle';
 
 export default abstract class BaseChannel<U, T> {
     public providers: U[] = [];
-    public abstract register(providers: U[] | Observable<U>[], dispose?: boolean): Observable<Bus<T>>;
+    public abstract register(providers: U[] | Observable<U>[]): Observable<Bus<T>>;
     protected _state?: T;
 
     constructor(
@@ -40,10 +39,11 @@ export default abstract class BaseChannel<U, T> {
             return typeof (p as any).then === 'function' ? from(p as Promise<U>) : of(p as U);
         });
 
-        return firstValueFrom(this.register(observableProviders, false));
+        // wrap observable without complete to avoid tear down
+        return new Promise((resolve, reject) => this.register(observableProviders).subscribe({ next: resolve, error: reject }));
     }
 
-    protected _register(providers: U[] | Observable<U>[], providerMapper: { (p: U): Provider; }, dispose: boolean): Observable<Bus<T>> {
+    protected _register(providers: U[] | Observable<U>[], providerMapper: { (p: U): Provider; }): Observable<Bus<T>> {
         const observableProviders: Observable<U>[] = providers.map((p) => isObservable(p) ? (p as Observable<U>) : of(p as U));
         const providers$ = merge(...observableProviders).pipe(
             tap(p => this.providers.push(p)),
@@ -62,7 +62,6 @@ export default abstract class BaseChannel<U, T> {
                     const s = bus.transient.subscribe(transient => this._state = transient);
                     observer.next(bus);
                     return () => {
-                        if (dispose === false) { return; }
                         bus.dispose();
                         s.unsubscribe();
                     };
