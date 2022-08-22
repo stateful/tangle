@@ -7,9 +7,9 @@ import type { Provider } from './types';
 import type { Bus, Client } from './tangle';
 
 export default class WebWorkerChannel<T> extends BaseChannel<Worker, T> {
-    register(providers: Worker[], dispose?: boolean): Observable<Bus<T>>;
-    register(providers: Observable<Worker>[], dispose?: boolean): Observable<Bus<T>> ;
-    register(providers: any, dispose = true): Observable<Bus<T>> {
+    register(providers: Worker[]): Observable<Bus<T>>;
+    register(providers: Observable<Worker>[]): Observable<Bus<T>> ;
+    register(providers: any): Observable<Bus<T>> {
         return this._register(providers, (p) => (<Provider>{
                 onMessage: (listener) => {
                     p.onmessage = (ev) => listener(ev.data);
@@ -17,7 +17,7 @@ export default class WebWorkerChannel<T> extends BaseChannel<Worker, T> {
                 postMessage: (message) => {
                     p.postMessage(message);
                 }
-            }), dispose);
+            }));
     }
 
     attach(): Client<T> {
