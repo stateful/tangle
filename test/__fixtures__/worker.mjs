@@ -9,5 +9,7 @@ if (workerData.add) {
 }
 
 if (workerData.event) {
-    client.emit('onFoobar', workerData.event);
+    setTimeout(() => {
+        client.emit('onFoobar', workerData.event);
+    }, 1000);
 }

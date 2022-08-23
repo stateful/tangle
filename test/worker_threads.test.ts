@@ -1,3 +1,16 @@
+import {
+    delay,
+    last,
+    lastValueFrom,
+    map,
+    mergeMap,
+    Observable,
+    of,
+    scan,
+    share,
+    takeWhile,
+    tap,
+} from 'rxjs';
 import path from 'path';
 import url from 'url';
 import { Worker } from 'worker_threads';
@@ -212,4 +225,66 @@ test('should wait until all parties have connected', async () => {
     expect(context.clients.size).toBe(providers.length + 1); // +1 for bus
 
     ch.providers.map((p) => p.terminate());
+});
+
+test('should allow for async worker resolution', async () => {
+    const namespace = 'test8';
+
+    const ch = new Channel<{ onFoobar: number }>(namespace, { onFoobar: 0 });
+    const providers$: Observable<Worker>[] = [
+        of(
+            new Worker(workerPath, {
+                argv,
+                workerData: { channel: namespace, event: 1 },
+            })
+        ),
+        of(
+            new Worker(workerPath, {
+                argv,
+                workerData: { channel: namespace, event: 3 },
+            })
+        ),
+        of(
+            new Worker(workerPath, {
+                argv,
+                workerData: { channel: namespace, event: 6 },
+            })
+        ).pipe(delay(1000)),
+    ];
+
+    const tally$ = ch.register(providers$).pipe(
+        mergeMap((bus) => {
+            return new Observable<number | undefined>((observer) => {
+                bus.on('onFoobar', (num) => {
+                    // console.log(`< ${num}`);
+                    return observer.next(num);
+                });
+            });
+        }),
+        scan((acc, one) => {
+            const num = one || 0;
+            acc.push(num);
+            return acc;
+        }, <number[]>[]),
+        share());
+
+    const expectTally = (expected: number) => {
+        return (source: Observable<number[]>) => {
+            return source.pipe(
+                takeWhile((numArr) => {
+                    return numArr.reduce((sum, one) => sum + one, 0) < expected;
+                }),
+                last(),
+                map(numArr => Array.from(numArr.values()).reduce((sum, one) => sum + one, 0)),
+                tap(sum => {
+                    // console.log(`= ${sum}`);
+                    expect(sum).toBe(expected);
+                })
+            );
+        };
+    };
+
+    const total$ = tally$.pipe(expectTally(10));
+
+    await lastValueFrom(total$);
 });
