@@ -322,7 +322,7 @@ export class Client<T> {
         this._notifer.pipe(map(_context => {
             // es6 map is not json serializable
             const context = { clients: Array.from(_context.clients.entries()) };
-            return { context } as any; // special payload
+            return { context };
         })).subscribe(payload => {
             this.providers.forEach((provider) => {
                 provider.postMessage({ [this.namespace]: payload });
