@@ -55,7 +55,7 @@ export class Client<T> {
             // broadcast previous state to newly connected clients
             this.context.pipe(
                 debounceTime(100),
-                withLatestFrom(this.transient)
+                withLatestFrom(this.transient),
             ).subscribe(([, previous]) => this.broadcast(previous || this.defaultValue));
         }
     }
@@ -96,19 +96,24 @@ export class Client<T> {
      */
     private _registerContext(): Observable<Context> {
         const context$ = this._inbound.pipe(
-            pluck('context'),
+            map(inbound => inbound?.context),
             filter(Boolean),
             scan((acc, curr) => {
                 if (Array.isArray(curr?.clients)) {
                     // deserialize array into es6 map
                     const _curr: Context = { clients: new Map(curr.clients) };
-                    _curr.clients.forEach(((value, key) => acc.clients.set(key, value)));
+                    _curr.clients.forEach(((value, key) => {
+                        return acc.clients.set(key, value);
+                    }));
                 }
                 return acc;
             }, this._context),
             share()
         );
         context$.subscribe(ctx => {
+            if (this._isBus) {
+                this.notify();
+            }
             this._context.clients = ctx.clients;
         });
 
@@ -134,9 +139,9 @@ export class Client<T> {
         }
 
         return this.events.pipe(
-            pluck('transient'),
-            pluck(eventName),
-            filter((val) => val !== undefined)
+            map(event => event?.transient),
+            map(transient => transient?.[eventName] as T[K]),
+            filter(Boolean)
         ).subscribe(fn);
     }
 
@@ -226,7 +231,7 @@ export class Client<T> {
 
         const obs = this.events
             .pipe(
-                pluck('event'),
+                map(e => e?.event),
                 filter(Boolean),
                 mergeMap((events) => from(Object.entries(events))),
                 filter(([k]) => k.toLowerCase().indexOf(index) >= 0),
@@ -248,18 +253,16 @@ export class Client<T> {
 
     private _register(): Observable<T> {
         const providers = from(this.providers);
-        const inGrouped$ = this._inbound;
-        const outGrouped$ = this._outbound;
 
-        const transientGrouped$ = merge(
-            inGrouped$.pipe(pluck('transient')),
-            outGrouped$.pipe(pluck('transient'))
+        const transientCombined$ = merge(
+            this._inbound.pipe(map(inbound => inbound?.transient)),
+            this._outbound.pipe(map(outbound => outbound?.transient))
         );
 
         const transient$ = merge(providers).pipe(
             this._fromProviders(),
             mergeMap(() => {
-                return transientGrouped$.pipe(
+                return transientCombined$.pipe(
                     scan(this._fold, this.defaultValue),
                     throttleTime(20),
                     mergeMap((transient) => {
@@ -277,13 +280,13 @@ export class Client<T> {
         );
 
         if (!this._isBus) {
-            inGrouped$.subscribe((state) => {
+            this._inbound.subscribe((state) => {
                 if (state) {
                     this._events.next(state);
                 }
             });
         }
-        const event$ = this._isBus ? merge(outGrouped$, inGrouped$) : outGrouped$;
+        const event$ = this._isBus ? merge(this._outbound, this._inbound) : this._outbound;
         event$
             .pipe(
                 withLatestFrom(transient$),
@@ -316,17 +319,15 @@ export class Client<T> {
             )
             .subscribe();
 
-        if (!this._isBus) {
-            this._notifer.pipe(map(_context => {
-                // es6 map is not json serializable
-                const context = { clients: Array.from(_context.clients.entries()) };
-                return { context } as any; // special payload
-            })).subscribe(payload => {
-                this.providers.forEach((provider) => {
-                    provider.postMessage({ [this.namespace]: payload });
-                });
+        this._notifer.pipe(map(_context => {
+            // es6 map is not json serializable
+            const context = { clients: Array.from(_context.clients.entries()) };
+            return { context } as any; // special payload
+        })).subscribe(payload => {
+            this.providers.forEach((provider) => {
+                provider.postMessage({ [this.namespace]: payload });
             });
-        }
+        });
 
         transient$.subscribe();
         return transient$;
