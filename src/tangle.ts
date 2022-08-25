@@ -33,7 +33,7 @@ export class Client<T> {
     private readonly _transient: Observable<T>;
     private readonly _eventMap: Map<keyof T, RegisteredEvent<T>[]> = new Map();
 
-    private readonly _context: Context = { clients: new Map() };
+    protected readonly _context: Context = { clients: new Map() };
 
     constructor(
         public readonly namespace: string,
@@ -113,16 +113,6 @@ export class Client<T> {
         });
 
         return context$;
-    }
-
-    /**
-     * returns promise that fires when all sandboxes have connected
-     */
-    public whenReady(): Promise<Context> {
-        return firstValueFrom(this.context.pipe(
-            bufferCount(this.providers.length),
-            map(() => this._context)
-        ));
     }
 
     /**
@@ -371,6 +361,17 @@ export class Bus<T> extends Client<T> {
     constructor(namespace: string, providers: Provider[], defaultValue: T) {
         super(namespace, providers, defaultValue, true);
     }
+
+    /**
+     * returns promise that fires when all sandboxes have connected
+     */
+    public whenReady(): Promise<Context> {
+        return firstValueFrom(this.context.pipe(
+            bufferCount(this.providers.length),
+            map(() => this._context)
+        ));
+    }
+
 }
 
 export * from './types';
