@@ -92,7 +92,7 @@
     "vitest": "^0.17.1"
   },
   "dependencies": {
-    "rxjs": "^7.5.5",
+    "rxjs": "7.5.5",
     "web-worker": "^1.2.0"
   }
 }
