@@ -1,5 +1,3 @@
-'use strict';
-
 var extendStatics = function(d, b) {
     extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
@@ -456,7 +454,7 @@ var SafeSubscriber = (function (_super) {
         var partialObserver;
         if (isFunction(observerOrNext) || !observerOrNext) {
             partialObserver = {
-                next: (observerOrNext !== null && observerOrNext !== void 0 ? observerOrNext : undefined),
+                next: observerOrNext !== null && observerOrNext !== void 0 ? observerOrNext : undefined,
                 error: error !== null && error !== void 0 ? error : undefined,
                 complete: complete !== null && complete !== void 0 ? complete : undefined,
             };
@@ -1775,19 +1773,19 @@ function share(options) {
     if (options === void 0) { options = {}; }
     var _a = options.connector, connector = _a === void 0 ? function () { return new Subject(); } : _a, _b = options.resetOnError, resetOnError = _b === void 0 ? true : _b, _c = options.resetOnComplete, resetOnComplete = _c === void 0 ? true : _c, _d = options.resetOnRefCountZero, resetOnRefCountZero = _d === void 0 ? true : _d;
     return function (wrapperSource) {
-        var connection;
-        var resetConnection;
-        var subject;
+        var connection = null;
+        var resetConnection = null;
+        var subject = null;
         var refCount = 0;
         var hasCompleted = false;
         var hasErrored = false;
         var cancelReset = function () {
             resetConnection === null || resetConnection === void 0 ? void 0 : resetConnection.unsubscribe();
-            resetConnection = undefined;
+            resetConnection = null;
         };
         var reset = function () {
             cancelReset();
-            connection = subject = undefined;
+            connection = subject = null;
             hasCompleted = hasErrored = false;
         };
         var resetAndUnsubscribe = function () {
@@ -1808,8 +1806,7 @@ function share(options) {
                 }
             });
             dest.subscribe(subscriber);
-            if (!connection &&
-                refCount > 0) {
+            if (!connection) {
                 connection = new SafeSubscriber({
                     next: function (value) { return dest.next(value); },
                     error: function (err) {
@@ -1825,7 +1822,7 @@ function share(options) {
                         dest.complete();
                     },
                 });
-                innerFrom(source).subscribe(connection);
+                from(source).subscribe(connection);
             }
         })(wrapperSource);
     };
@@ -1837,18 +1834,13 @@ function handleReset(reset, on) {
     }
     if (on === true) {
         reset();
-        return;
+        return null;
     }
     if (on === false) {
-        return;
+        return null;
     }
-    var onSubscriber = new SafeSubscriber({
-        next: function () {
-            onSubscriber.unsubscribe();
-            reset();
-        },
-    });
-    return on.apply(void 0, __spreadArray([], __read(args))).subscribe(onSubscriber);
+    return on.apply(void 0, __spreadArray([], __read(args))).pipe(take(1))
+        .subscribe(function () { return reset(); });
 }
 
 var defaultThrottleConfig = {
@@ -2138,18 +2130,4 @@ class Bus extends Client {
     }
 }
 
-exports.Bus = Bus;
-exports.Client = Client;
-exports.Observable = Observable;
-exports.createOperatorSubscriber = createOperatorSubscriber;
-exports.from = from;
-exports.identity = identity;
-exports.innerFrom = innerFrom;
-exports.isFunction = isFunction;
-exports.map = map;
-exports.merge = merge;
-exports.noop = noop;
-exports.of = of;
-exports.operate = operate;
-exports.scan = scan;
-exports.timer = timer;
+export { Bus as B, Client as C, Observable as O, innerFrom as a, identity as b, createOperatorSubscriber as c, of as d, map as e, from as f, isFunction as i, merge as m, noop as n, operate as o, scan as s, timer as t };

@@ -1,7 +1,7 @@
 'use strict';
 
-var channel = require('./channel-5757639e.js');
-require('./tangle-bdca56c6.js');
+var channel = require('./channel-66ab57c1.js');
+require('./tangle-31ff6760.js');
 
 class WebWorkerChannel extends channel.BaseChannel {
     register(providers) {
