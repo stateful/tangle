@@ -1,5 +1,5 @@
-import { B as BaseChannel } from './channel-6251a58b.js';
-import './tangle-9a7593a9.js';
+import { B as BaseChannel } from './channel-a4485895.js';
+import './tangle-683e1df4.js';
 
 class WebWorkerChannel extends BaseChannel {
     register(providers) {
