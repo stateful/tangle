@@ -1,13 +1,11 @@
-'use strict';
-
-var tangle = require('./tangle-bdca56c6.js');
+import { O as Observable, i as isFunction, o as operate, c as createOperatorSubscriber, n as noop, a as innerFrom, b as identity, f as from, d as of, m as merge, e as map, s as scan, B as Bus, C as Client, t as timer } from './tangle-9a7593a9.js';
 
 function isObservable(obj) {
-    return !!obj && (obj instanceof tangle.Observable || (tangle.isFunction(obj.lift) && tangle.isFunction(obj.subscribe)));
+    return !!obj && (obj instanceof Observable || (isFunction(obj.lift) && isFunction(obj.subscribe)));
 }
 
 function debounce(durationSelector) {
-    return tangle.operate(function (source, subscriber) {
+    return operate(function (source, subscriber) {
         var hasValue = false;
         var lastValue = null;
         var durationSubscriber = null;
@@ -21,12 +19,12 @@ function debounce(durationSelector) {
                 subscriber.next(value);
             }
         };
-        source.subscribe(tangle.createOperatorSubscriber(subscriber, function (value) {
+        source.subscribe(createOperatorSubscriber(subscriber, function (value) {
             durationSubscriber === null || durationSubscriber === void 0 ? void 0 : durationSubscriber.unsubscribe();
             hasValue = true;
             lastValue = value;
-            durationSubscriber = tangle.createOperatorSubscriber(subscriber, emit, tangle.noop);
-            tangle.innerFrom(durationSelector(value)).subscribe(durationSubscriber);
+            durationSubscriber = createOperatorSubscriber(subscriber, emit, noop);
+            innerFrom(durationSelector(value)).subscribe(durationSubscriber);
         }, function () {
             emit();
             subscriber.complete();
@@ -37,16 +35,16 @@ function debounce(durationSelector) {
 }
 
 function switchMap(project, resultSelector) {
-    return tangle.operate(function (source, subscriber) {
+    return operate(function (source, subscriber) {
         var innerSubscriber = null;
         var index = 0;
         var isComplete = false;
         var checkComplete = function () { return isComplete && !innerSubscriber && subscriber.complete(); };
-        source.subscribe(tangle.createOperatorSubscriber(subscriber, function (value) {
+        source.subscribe(createOperatorSubscriber(subscriber, function (value) {
             innerSubscriber === null || innerSubscriber === void 0 ? void 0 : innerSubscriber.unsubscribe();
             var innerIndex = 0;
             var outerIndex = index++;
-            tangle.innerFrom(project(value, outerIndex)).subscribe((innerSubscriber = tangle.createOperatorSubscriber(subscriber, function (innerValue) { return subscriber.next(resultSelector ? resultSelector(value, innerValue, outerIndex, innerIndex++) : innerValue); }, function () {
+            innerFrom(project(value, outerIndex)).subscribe((innerSubscriber = createOperatorSubscriber(subscriber, function (innerValue) { return subscriber.next(resultSelector ? resultSelector(value, innerValue, outerIndex, innerIndex++) : innerValue); }, function () {
                 innerSubscriber = null;
                 checkComplete();
             })));
@@ -58,16 +56,16 @@ function switchMap(project, resultSelector) {
 }
 
 function tap(observerOrNext, error, complete) {
-    var tapObserver = tangle.isFunction(observerOrNext) || error || complete
+    var tapObserver = isFunction(observerOrNext) || error || complete
         ?
             { next: observerOrNext, error: error, complete: complete }
         : observerOrNext;
     return tapObserver
-        ? tangle.operate(function (source, subscriber) {
+        ? operate(function (source, subscriber) {
             var _a;
             (_a = tapObserver.subscribe) === null || _a === void 0 ? void 0 : _a.call(tapObserver);
             var isUnsub = true;
-            source.subscribe(tangle.createOperatorSubscriber(subscriber, function (value) {
+            source.subscribe(createOperatorSubscriber(subscriber, function (value) {
                 var _a;
                 (_a = tapObserver.next) === null || _a === void 0 ? void 0 : _a.call(tapObserver, value);
                 subscriber.next(value);
@@ -90,7 +88,7 @@ function tap(observerOrNext, error, complete) {
             }));
         })
         :
-            tangle.identity;
+            identity;
 }
 
 class BaseChannel {
@@ -102,23 +100,23 @@ class BaseChannel {
     debounceResolution(count, timeout) {
         return (source) => source.pipe(debounce(ps => {
             const t = ps.length === count ? 0 : timeout;
-            return tangle.timer(t);
+            return timer(t);
         }));
     }
     registerPromise(providers) {
         const observableProviders = providers.map((p) => {
-            return typeof p.then === 'function' ? tangle.from(p) : tangle.of(p);
+            return typeof p.then === 'function' ? from(p) : of(p);
         });
         return new Promise((resolve, reject) => this.register(observableProviders).subscribe({ next: resolve, error: reject }));
     }
     _register(providers, providerMapper) {
-        const observableProviders = providers.map((p) => isObservable(p) ? p : tangle.of(p));
-        const providers$ = tangle.merge(...observableProviders).pipe(tap(p => this.providers.push(p)), tangle.map(p => providerMapper(p)), tangle.scan((acc, one) => {
+        const observableProviders = providers.map((p) => isObservable(p) ? p : of(p));
+        const providers$ = merge(...observableProviders).pipe(tap(p => this.providers.push(p)), map(p => providerMapper(p)), scan((acc, one) => {
             acc.push(one);
             return acc;
         }, []));
         return providers$.pipe(this.debounceResolution(this.providers.length, 100), switchMap(providers => {
-            return new tangle.Observable(observer => {
+            return new Observable(observer => {
                 const bus = this._initiateBus(providers, this._state);
                 const s = bus.transient.subscribe(transient => this._state = transient);
                 observer.next(bus);
@@ -130,13 +128,13 @@ class BaseChannel {
         }));
     }
     _initiateBus(providers, previousState) {
-        return new tangle.Bus(this._namespace, providers, previousState || this._defaultValue || {});
+        return new Bus(this._namespace, providers, previousState || this._defaultValue || {});
     }
     _initiateClient(provider) {
-        const client = new tangle.Client(this._namespace, [provider], this._defaultValue || {});
+        const client = new Client(this._namespace, [provider], this._defaultValue || {});
         client.notify();
         return client;
     }
 }
 
-exports.BaseChannel = BaseChannel;
+export { BaseChannel as B };
