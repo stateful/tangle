@@ -3,6 +3,7 @@ import type { Provider } from './types';
 import BaseChannel from './channel';
 import { Bus } from './tangle';
 import { Webview } from 'vscode';
+import type { WebviewApi } from 'vscode-webview';
 
 /**
  * In VS Code web views are created when opened by the extension
@@ -20,8 +21,7 @@ export default class WebViewChannel<T> extends BaseChannel<Webview, T> {
         }));
     }
 
-    // TODO: perhaps type union here? since technically DOM-based envs don't have Webview
-    attach(webview: Webview) {
+    attach(webview: WebviewApi<unknown>) {
         return this._initiateClient(<Provider>{
             onMessage: (listener: EventListener) => {
                 window.addEventListener('message', (event) => listener(event.data));
