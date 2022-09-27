@@ -1,7 +1,7 @@
 import {
     BehaviorSubject,
     bufferCount,
-    debounceTime,
+    debounce,
     EMPTY,
     filter,
     first,
@@ -16,9 +16,20 @@ import {
     share,
     Subject,
     throttleTime,
+    timer,
     withLatestFrom,
 } from 'rxjs';
 import type { Provider, Payload, Listener, RegisteredEvent, Context } from './types';
+
+/**
+ * operator to debounce subject when either the count is exceeded or timeout is reached first
+ */
+export function debounceRace<T>(count: number, timeout: number, getLen: (subject: T) => number) {
+    return (source: Observable<T>) => source.pipe(debounce(ps => {
+        const t = getLen(ps) >= count ? 0 : timeout;
+        return timer(t);
+    }));
+}
 
 export class Client<T> {
     public readonly id: string = this._isBus ? 'bus' : Math.random().toString(36).substring(2);
@@ -54,7 +65,7 @@ export class Client<T> {
         if (this._isBus) {
             // broadcast previous state to newly connected clients
             this.context.pipe(
-                debounceTime(100),
+                debounceRace<Context>(this.providers.length, 100, subject => /* +1 to account for bus entry*/ subject.clients.size + 1),
                 withLatestFrom(this.transient),
             ).subscribe(([, previous]) => this.broadcast(previous || this.defaultValue));
         }

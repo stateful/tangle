@@ -1,5 +1,4 @@
 import {
-    debounce,
     from,
     isObservable,
     map,
@@ -9,10 +8,9 @@ import {
     scan,
     switchMap,
     tap,
-    timer,
 } from 'rxjs';
 import { Provider } from './types';
-import { Client, Bus } from './tangle';
+import { Client, Bus, debounceRace } from './tangle';
 
 export default abstract class BaseChannel<U, T> {
     public providers: U[] = [];
@@ -23,16 +21,6 @@ export default abstract class BaseChannel<U, T> {
         private _namespace: string,
         private _defaultValue?: Required<T>,
     ) { }
-
-    /**
-     * operator to debounce providers when either the count or timeout is reached first
-     */
-    protected debounceResolution(count: number, timeout: number) {
-        return (source: Observable<Provider[]>) => source.pipe(debounce(ps => {
-            const t = ps.length === count ? 0 : timeout;
-            return timer(t);
-        }));
-    }
 
     public registerPromise(providers: U[] | Promise<U>[]): Promise<Bus<T>> {
         const observableProviders: Observable<U>[] = providers.map((p) => {
@@ -55,7 +43,7 @@ export default abstract class BaseChannel<U, T> {
         );
 
         return providers$.pipe(
-            this.debounceResolution(this.providers.length, 100),
+            debounceRace<Provider[]>(this.providers.length, 100, (subject => subject.length)),
             switchMap(providers => {
                 return new Observable<Bus<T>>(observer => {
                     const bus = this._initiateBus(providers, this._state);
