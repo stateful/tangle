@@ -53,7 +53,7 @@
   ],
   "scripts": {
     "build": "run-s compile",
-    "compile": "rollup -c ./rollup.config.js",
+    "compile": "rollup -c ./rollup.config.ts --configPlugin typescript",
     "clean": "rm -r dist",
     "prepare": "husky install",
     "release": "release-it --github.release --verbose",

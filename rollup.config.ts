@@ -1,17 +1,18 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import url from 'node:url';
+import path from 'node:path';
 import typescript from '@rollup/plugin-typescript';
 import resolve from '@rollup/plugin-node-resolve';
 import cleanup from 'rollup-plugin-cleanup';
 import multi from 'rollup-plugin-multi-input';
 import { terser } from 'rollup-plugin-terser';
 
+const dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const extensions = ['.js', '.ts'];
-
 export const createPackageJSON = (dir = 'esm', type = 'module') => ({
     name: 'create-package-json',
     writeBundle: () => fs.promises.writeFile(
-        path.join(__dirname, 'dist', dir, 'package.json'),
+        path.join(dirname, 'dist', dir, 'package.json'),
         JSON.stringify({ type }, null, 4),
         'utf-8'
     )
@@ -29,19 +30,22 @@ const esm = {
         format: 'esm',
         dir: 'dist/esm',
         exports: 'auto',
+        sourcemap: true,
         ...(process.env.NODE_ENV === 'production'
             ? { plugins: [terser()] }
             : {}
         )
     },
     plugins: [
-        multi(),
+        // @ts-expect-error https://github.com/alfredosalzillo/rollup-plugin-multi-input/issues/61
+        multi.default(),
         resolve({ extensions }),
         typescript({
             tsconfig: './tsconfig.json',
             outDir: 'dist/esm',
+            declaration: true,
             declarationDir: './dist/esm',
-            sourceMap: true,
+            sourceMap: true
         }),
         createPackageJSON(),
         cleanup({ comments: 'none' })
@@ -60,6 +64,7 @@ const cjs = {
         typescript({
             tsconfig: './tsconfig.json',
             outDir: 'dist/cjs',
+            declaration: true,
             declarationDir: './dist/cjs',
         }),
         createPackageJSON('cjs', 'commonjs'),
