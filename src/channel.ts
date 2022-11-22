@@ -36,7 +36,9 @@ export default abstract class BaseChannel<U, T> {
 
     public registerPromise(providers: U[] | Promise<U>[]): Promise<Bus<T>> {
         const observableProviders: Observable<U>[] = providers.map((p) => {
-            return typeof (p as any).then === 'function' ? from(p as Promise<U>) : of(p as U);
+            return typeof (p as Promise<U>).then === 'function'
+                ? from(p as Promise<U>)
+                : of(p as U);
         });
 
         // wrap observable without complete to avoid tear down

@@ -1,5 +1,3 @@
-import { emptyItemQuery } from './item';
-
 /**
  * get id of worker from url get params
  */
@@ -148,7 +146,7 @@ export default class Store {
 	 * @param {function(number, number, number)} callback Called when the count is completed
 	 */
 	count(callback) {
-		this.find(emptyItemQuery, data => {
+		this.find(undefined, data => {
 			const total = data.length;
 
 			let i = total;
