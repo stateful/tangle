@@ -11,9 +11,9 @@ import { Webview } from 'vscode';
  */
 
 export default class WebViewChannel<T> extends BaseChannel<Webview, T> {
-    register(providers: Observable<Webview>[]): Observable<Bus<T>> ;
     register(providers: Webview[]): Observable<Bus<T>> ;
-    register(providers: any): Observable<Bus<T>> {
+    register(providers: Observable<Webview>[]): Observable<Bus<T>> ;
+    register(providers: Observable<Webview>[] | Webview[]): Observable<Bus<T>> {
         return this._register(providers, (p) => (<Provider>{
             onMessage: p.onDidReceiveMessage.bind(p),
             postMessage: p.postMessage.bind(p),

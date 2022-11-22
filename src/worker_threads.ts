@@ -10,7 +10,7 @@ import type { Bus, Client } from './tangle';
 export default class WorkerThreadChannel<T> extends BaseChannel<Worker, T> {
     register(providers: Worker[]): Observable<Bus<T>> ;
     register(providers: Observable<Worker>[]): Observable<Bus<T>> ;
-    register(providers: any): Observable<Bus<T>> {
+    register(providers: Observable<Worker>[] | Worker[]): Observable<Bus<T>> {
         return this._register(providers,
             (p: Worker) => (<Provider>{
                 onMessage: (listener) => {
