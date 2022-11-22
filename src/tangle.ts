@@ -97,7 +97,7 @@ export class Client<T> {
     private _registerContext(): Observable<Context> {
         const context$ = this._inbound.pipe(
             map(inbound => inbound?.context),
-            filter(Boolean),
+            filter(context => typeof context !== 'undefined'),
             scan((acc, curr) => {
                 if (Array.isArray(curr?.clients)) {
                     // deserialize array into es6 map
@@ -141,7 +141,8 @@ export class Client<T> {
         return this.events.pipe(
             map(event => event?.transient),
             map(transient => transient?.[eventName] as T[K]),
-            filter(Boolean)
+            filter(value => typeof value !== 'undefined'),
+            map(value => value as T[K])
         ).subscribe(fn);
     }
 
@@ -232,7 +233,8 @@ export class Client<T> {
         const obs = this.events
             .pipe(
                 map(e => e?.event),
-                filter(Boolean),
+                filter(e => typeof e !== 'undefined'),
+                map(e => e as Record<string, any>),
                 mergeMap((events) => from(Object.entries(events))),
                 filter(([k]) => k.toLowerCase().indexOf(index) >= 0),
                 map(([, v]) => v),
