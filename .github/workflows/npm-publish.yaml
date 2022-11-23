@@ -50,6 +50,8 @@ jobs:
     steps:
       - name: Clone Repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Setup Node version
         uses: actions/setup-node@v2
         with:
