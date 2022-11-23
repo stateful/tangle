@@ -7,6 +7,7 @@ import cleanup from 'rollup-plugin-cleanup';
 import multi from 'rollup-plugin-multi-input';
 import { terser } from 'rollup-plugin-terser';
 
+const isProduction = process.env.NODE_ENV === 'production'
 const dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const extensions = ['.js', '.ts'];
 export const createPackageJSON = (dir = 'esm', type = 'module') => ({
@@ -30,8 +31,8 @@ const esm = {
         format: 'esm',
         dir: 'dist/esm',
         exports: 'auto',
-        sourcemap: true,
-        ...(process.env.NODE_ENV === 'production'
+        sourcemap: !isProduction,
+        ...(isProduction
             ? { plugins: [terser()] }
             : {}
         )
@@ -45,7 +46,7 @@ const esm = {
             outDir: 'dist/esm',
             declaration: true,
             declarationDir: './dist/esm',
-            sourceMap: true
+            sourceMap: !isProduction
         }),
         createPackageJSON(),
         cleanup({ comments: 'none' })
@@ -66,6 +67,7 @@ const cjs = {
             outDir: 'dist/cjs',
             declaration: true,
             declarationDir: './dist/cjs',
+            sourceMap: !isProduction
         }),
         createPackageJSON('cjs', 'commonjs'),
         ...esm.plugins.slice(4)
