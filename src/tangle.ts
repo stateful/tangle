@@ -1,7 +1,6 @@
 import {
     BehaviorSubject,
     bufferCount,
-    debounceTime,
     EMPTY,
     filter,
     first,
@@ -54,7 +53,6 @@ export class Client<T> {
         if (this._isBus) {
             // broadcast previous state to newly connected clients
             this.context.pipe(
-                debounceTime(100),
                 withLatestFrom(this.transient),
             ).subscribe(([, previous]) => this.broadcast(previous || this.defaultValue));
         }
@@ -138,12 +136,20 @@ export class Client<T> {
             fn(this.defaultValue[eventName]);
         }
 
+        let lastValue: T[K];
         return this.events.pipe(
             map(event => event?.transient),
             map(transient => transient?.[eventName] as T[K]),
             filter(value => typeof value !== 'undefined'),
             map(value => value as T[K])
-        ).subscribe(fn);
+        ).subscribe((val: T[K]) => {
+            if (val === lastValue) {
+                return;
+            }
+
+            lastValue = val;
+            fn(val);
+        });
     }
 
     /**

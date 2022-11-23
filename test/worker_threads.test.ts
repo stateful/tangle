@@ -28,7 +28,7 @@ const defaultValue = {
     action: { method: 'noop', args: [] }
 };
 
-const EXPECTED_SUM = 15;
+const EXPECTED_SUM = 25;
 
 // eslint-disable-next-line
 // @ts-ignore VSCode has problems detecting ESM here
@@ -92,6 +92,32 @@ test('should get bus by promise', async () => {
     expect(result).toBe(EXPECTED_SUM);
     ch.providers.map((p) => p.terminate());
 });
+
+test('does not emit if state has not changed', async () => {
+    const namespace = 'test1';
+
+    const ch = new Channel<Payload>(namespace, { someProp: 0 } as any);
+    const bus = await ch.registerPromise([
+        new Worker(workerPath, { argv, workerData: { channel: namespace, add: 1 } })
+    ]);
+    let result = 0;
+    bus.listen('someProp', (sum?: number) => {
+        result += sum || 0;
+    });
+
+    bus.broadcast({ someProp: 1 });
+    bus.broadcast({ someProp: 1 });
+    bus.broadcast({ someProp: 1 });
+    bus.broadcast({ someProp: 1 });
+    bus.broadcast({ someProp: 1 });
+    bus.broadcast({ someProp: 1 });
+    // implicitly wait to allow events to come in
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    expect(result).toBe(1);
+    ch.providers.map((p) => p.terminate());
+});
+
 
 test('should allow to send events', async () => {
     const namespace = 'test3';
