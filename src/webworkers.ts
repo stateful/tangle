@@ -11,13 +11,9 @@ export default class WebWorkerChannel<T> extends BaseChannel<Worker, T> {
     register(providers: Observable<Worker>[]): Observable<Bus<T>> ;
     register(providers: Observable<Worker>[] | Worker[]): Observable<Bus<T>> {
         return this._register(providers, (p) => (<Provider>{
-                onMessage: (listener) => {
-                    p.onmessage = (ev) => listener(ev.data);
-                },
-                postMessage: (message) => {
-                    p.postMessage(message);
-                }
-            }));
+            onMessage: (listener) => p.onmessage = (ev) => listener(ev.data),
+            postMessage: (message) => p.postMessage(message)
+        }));
     }
 
     attach(): Client<T> {
