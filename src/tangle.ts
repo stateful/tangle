@@ -142,8 +142,8 @@ export class Client<T> {
             map(transient => transient?.[eventName] as T[K]),
             filter(value => typeof value !== 'undefined'),
             map(value => value as T[K]),
-            distinctUntilChanged((prev, curr) => prev === curr)
-        ).subscribe();
+            distinctUntilChanged()
+        ).subscribe(fn);
     }
 
     /**
