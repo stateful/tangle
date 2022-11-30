@@ -1,5 +1,3 @@
-import { emptyItemQuery } from './item';
-
 export default class Controller {
 	/**
 	 * @param  {!Store} store A Store instance
@@ -146,7 +144,6 @@ export default class Controller {
 
 		if (force || this._lastActiveRoute !== '' || this._lastActiveRoute !== route) {
 			this.store.find({
-				'': emptyItemQuery,
 				'active': {completed: false},
 				'completed': {completed: true}
 			}[route], this.view.showItems.bind(this.view));

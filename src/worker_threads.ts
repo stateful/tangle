@@ -1,10 +1,4 @@
-import {
-    of,
-    map,
-    take,
-    toArray,
-    Observable,
-} from 'rxjs';
+import { Observable } from 'rxjs';
 import { parentPort } from 'worker_threads';
 import type { Worker } from 'worker_threads';
 
@@ -14,23 +8,13 @@ import type { Bus, Client } from './tangle';
 
 
 export default class WorkerThreadChannel<T> extends BaseChannel<Worker, T> {
-    public providers: Worker[] = [];
-
-    register(providers: Worker[]): Observable<Bus<T>> {
-        this.providers.push(...providers);
-        return of(...providers).pipe(
-            take(providers.length),
-            toArray(),
-            map((ps) => ps.map((p) => (<Provider>{
-                onMessage: (listener) => {
-                    p.on('message', listener);
-                },
-                postMessage: (message) => {
-                    p.postMessage(message);
-                }
-            }))),
-            map(this._initiateBus.bind(this))
-        );
+    register(providers: Worker[]): Observable<Bus<T>> ;
+    register(providers: Observable<Worker>[]): Observable<Bus<T>> ;
+    register(providers: Observable<Worker>[] | Worker[]): Observable<Bus<T>> {
+        return this._register(providers, (p: Worker) => (<Provider>{
+            onMessage: (listener) => p.on('message', listener),
+            postMessage: (message) => p.postMessage(message)
+        }));
     }
 
     attach(): Client<T> {
@@ -40,9 +24,7 @@ export default class WorkerThreadChannel<T> extends BaseChannel<Worker, T> {
 
         const pp = parentPort;
         return this._initiateClient(<Provider>{
-            onMessage: (listener: EventListener) => {
-                pp.on('message', listener);
-            },
+            onMessage: (listener: EventListener) => pp.on('message', listener),
             postMessage: (message: any) => {
                 pp.postMessage(message);
                 return Promise.resolve();

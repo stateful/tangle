@@ -1,16 +1,10 @@
-import {
-    of,
-    map,
-    take,
-    toArray,
-} from 'rxjs';
+import type { Observable } from 'rxjs';
 
 import type { Provider } from './types';
 import BaseChannel from './channel';
+import type { Bus } from './tangle';
 
 export default class IFrameChannel<T> extends BaseChannel<HTMLIFrameElement, T> {
-    public providers: HTMLIFrameElement[] = [];
-
     constructor(
         namespace: string,
         defaultValue?: Required<T>,
@@ -22,24 +16,20 @@ export default class IFrameChannel<T> extends BaseChannel<HTMLIFrameElement, T> 
         super(namespace, defaultValue);
     }
 
-    register(providers: HTMLIFrameElement[]) {
-        this.providers.push(...providers);
-        return of(...providers).pipe(
-            take(providers.length),
-            toArray(),
-            map((ps: HTMLIFrameElement[]) => ps.map((p) => (<Provider>{
-                onMessage: (listener) => {
-                    this._window.onmessage = (ev) => listener(ev.data);
-                },
-                postMessage: (message) => {
-                    if (!p.contentWindow) {
-                        throw new Error('No content window found');
-                    }
-                    p.contentWindow.postMessage(message, '*');
-                },
-            }))),
-            map(this._initiateBus.bind(this))
-        );
+    register(providers: HTMLIFrameElement[]): Observable<Bus<T>>;
+    register(providers: Observable<HTMLIFrameElement>[]): Observable<Bus<T>>;
+    register(providers: Observable<HTMLIFrameElement>[] | HTMLIFrameElement[]): Observable<Bus<T>> {
+        return this._register(providers, (p) => (<Provider>{
+            onMessage: (listener) => {
+                this._window.onmessage = (ev) => listener(ev.data);
+            },
+            postMessage: (message) => {
+                if (!p.contentWindow) {
+                    throw new Error('No content window found');
+                }
+                p.contentWindow.postMessage(message, '*');
+            },
+        }));
     }
 
     attach() {

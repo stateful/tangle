@@ -16,7 +16,7 @@ export default defineConfig({
             exclude: ['**/dist/**', '**/*.test.ts'],
             lines: 93,
             functions: 90,
-            branches: 95,
+            branches: 93,
             statements: 93
         }
     }

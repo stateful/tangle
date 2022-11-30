@@ -4,7 +4,9 @@ import Channel from '../dist/esm/worker_threads.js';
 
 const filename = new URL('', import.meta.url).pathname;
 
-const ch = new Channel('test', {});
+const ch = new Channel('test', {
+    shutdownWorker: false
+});
 
 if (isMainThread) {
     const bus = await ch.registerPromise([
@@ -14,9 +16,13 @@ if (isMainThread) {
     ]);
 
     bus.listen('onCustomEvent', (msg) =>
-        console.log('Received from worker thread:', msg));
+        msg && console.log('Received from worker thread:', msg));
 
-    bus.listen('onExit', () => {
+    bus.listen('shutdownWorker', (shutdownWorker) => {
+        if (!shutdownWorker) {
+            return;
+        }
+
         console.log('Bye bye');
         ch.providers.map((p) => p.terminate());
     });
@@ -41,7 +47,7 @@ if (isMainThread) {
      */
     client.listen('onCustomWorkerEvent', (id) => {
         if (workerData.id === id) {
-            client.broadcast({ 'onExit': workerData.id });
+            client.broadcast({ shutdownWorker: true });
         }
     });
 }

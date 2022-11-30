@@ -5,31 +5,56 @@ on:
     inputs:
       releaseType:
         description: "Release type - major, minor or patch"
-        required: true
+        required: false
         type: choice
         default: "patch"
         options:
           - patch
           - minor
           - major
-      additionalFlags:
-        description: "Additional flags for pre-releases, e.g. '--dry-run', '--preRelease=beta' or '--preRelease'"
-        required: false
+      releaseChannel:
+        description: release channel (ignore if pre-release)
+        required: true
         type: string
+        default: "latest"
+      preRelease:
+        description: If latest release was a pre-release (e.g. X.X.X-beta.0) and you want to just bump the pre-release version, pick "yes"
+        required: true
+        type: choice
+        default: "no"
+        options:
+          - "yes - create new pre-release version"
+          - "yes - bump pre-release build"
+          - "no"
+      preReleaseChannel:
+        description: pre-release channel
+        required: true
+        type: string
+        default: "beta"
+      customReleaseParams:
+        description: Additional params applied to release command, e.g. "--dry-run"
+        required: false
 
 env:
   NPM_TOKEN: ${{secrets.NPM_TOKEN}}
 
 jobs:
-  test:
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Git
+        run: |
+          git config --global user.name "stateful-wombot"
+          git config --global user.email "christian+github-bot@stateful.com"
       - name: Setup Node version
         uses: actions/setup-node@v1
         with:
           node-version: 18
+          registry-url: https://registry.npmjs.org/
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - name: Build Package
@@ -37,37 +62,27 @@ jobs:
         env:
           NODE_ENV: production
       - name: Run tests
-        run: npm test
+        run: yarn test
+      - name: Release
+        run: npx release-it ${{github.event.inputs.releaseType}} --github.release --ci --npm.skipChecks --no-git.requireCleanWorkingDir --npm.tag=${{github.event.inputs.releaseChannel}} ${{github.event.inputs.customReleaseParams}}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ github.event.inputs.preRelease == 'no' }}
+      - name: Pre-Release
+        run: npx release-it ${{github.event.inputs.releaseType}} --github.release --ci --npm.skipChecks --no-git.requireCleanWorkingDir --preRelease=${{github.event.inputs.preReleaseChannel}} --github.preRelease --npm.tag=${{github.event.inputs.preReleaseChannel}} ${{github.event.inputs.customReleaseParams}}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ github.event.inputs.preRelease == 'yes - create new pre-release version' }}
+      - name: Pre-Release
+        run: npx release-it --github.release --ci --npm.skipChecks --no-git.requireCleanWorkingDir --preRelease=${{github.event.inputs.preReleaseChannel}} --github.preRelease --npm.tag=${{github.event.inputs.preReleaseChannel}} ${{github.event.inputs.customReleaseParams}}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ github.event.inputs.preRelease == 'yes - bump pre-release build' }}
       - name: Upload built package
         uses: actions/upload-artifact@v2
         with:
           name: compiled-package
           path: dist/
-
-  release:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clone Repository
-        uses: actions/checkout@v2
-      - name: Setup Node version
-        uses: actions/setup-node@v2
-        with:
-          node-version: 16
-          registry-url: https://registry.npmjs.org/
-      - name: Setup Git
-        run: |
-          git config --global user.name "stateful-wombot"
-          git config --global user.email "christian+github-bot@stateful.com"
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-      - name: Download built package
-        uses: actions/download-artifact@v2
-        with:
-          name: compiled-package
-          path: dist/
-      - name: Release
-        run: npm run release:ci -- ${{github.event.inputs.releaseType}} ${{github.event.inputs.additionalFlags}}
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

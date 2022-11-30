@@ -1,8 +1,4 @@
 import {
-    of,
-    map,
-    take,
-    toArray,
     Observable,
 } from 'rxjs';
 
@@ -11,23 +7,13 @@ import type { Provider } from './types';
 import type { Bus, Client } from './tangle';
 
 export default class WebWorkerChannel<T> extends BaseChannel<Worker, T> {
-    public providers: Worker[] = [];
-
-    register(providers: Worker[]): Observable<Bus<T>> {
-        this.providers.push(...providers);
-        return of(...providers).pipe(
-            take(providers.length),
-            toArray(),
-            map((ps) => ps.map((p) => (<Provider>{
-                onMessage: (listener) => {
-                    p.onmessage = (ev) => listener(ev.data);
-                },
-                postMessage: (message) => {
-                    p.postMessage(message);
-                }
-            }))),
-            map(this._initiateBus.bind(this))
-        );
+    register(providers: Worker[]): Observable<Bus<T>>;
+    register(providers: Observable<Worker>[]): Observable<Bus<T>> ;
+    register(providers: Observable<Worker>[] | Worker[]): Observable<Bus<T>> {
+        return this._register(providers, (p) => (<Provider>{
+            onMessage: (listener) => p.onmessage = (ev) => listener(ev.data),
+            postMessage: (message) => p.postMessage(message)
+        }));
     }
 
     attach(): Client<T> {
