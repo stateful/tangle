@@ -16,6 +16,7 @@ import {
     Subject,
     throttleTime,
     withLatestFrom,
+    distinctUntilChanged,
 } from 'rxjs';
 import type { Provider, Payload, Listener, RegisteredEvent, Context } from './types';
 
@@ -136,20 +137,13 @@ export class Client<T> {
             fn(this.defaultValue[eventName]);
         }
 
-        let lastValue: T[K];
         return this.events.pipe(
             map(event => event?.transient),
             map(transient => transient?.[eventName] as T[K]),
             filter(value => typeof value !== 'undefined'),
-            map(value => value as T[K])
-        ).subscribe((val: T[K]) => {
-            if (val === lastValue) {
-                return;
-            }
-
-            lastValue = val;
-            fn(val);
-        });
+            map(value => value as T[K]),
+            distinctUntilChanged((prev, curr) => prev === curr)
+        ).subscribe();
     }
 
     /**
