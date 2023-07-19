@@ -5,9 +5,9 @@ import typescript from '@rollup/plugin-typescript';
 import resolve from '@rollup/plugin-node-resolve';
 import cleanup from 'rollup-plugin-cleanup';
 import multi from 'rollup-plugin-multi-input';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 
-const isProduction = process.env.NODE_ENV === 'production'
+const isProduction = process.env.NODE_ENV === 'production';
 const dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const extensions = ['.js', '.ts'];
 export const createPackageJSON = (dir = 'esm', type = 'module') => ({
@@ -38,7 +38,6 @@ const esm = {
         )
     },
     plugins: [
-        // @ts-expect-error https://github.com/alfredosalzillo/rollup-plugin-multi-input/issues/61
         multi.default(),
         resolve({ extensions }),
         typescript({
