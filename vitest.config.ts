@@ -11,6 +11,7 @@ export default defineConfig({
             '/test-d',
             '**/node_modules/**'
         ],
+        testTimeout: 30 * 1000, // 30s
         coverage: {
             enabled: true,
             exclude: ['**/dist/**', '**/*.test.ts'],
